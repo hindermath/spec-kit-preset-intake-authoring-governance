@@ -23,4 +23,3 @@ how ambiguity blocks authoring.
 Define repository-specific security, privacy, WCAG 2.2 AA, CEFR B2, platform,
 learning, evidence, and delivery-authority requirements. Profiles cannot weaken
 the preset's source, secret, overwrite, or authority protections.
-

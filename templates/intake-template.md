@@ -1,8 +1,8 @@
 <!-- intake-authoring:begin -->
 # [Intake Title]
 
-**Status:** [Ready for review or blocked draft]  
-**Audience:** [Primary audience]  
+**Status:** [Ready for review or blocked draft]
+**Audience:** [Primary audience]
 **Profile:** [Resolved project profile]
 
 ## Purpose
@@ -68,4 +68,3 @@ evidence applicability.]
 ```
 
 <!-- intake-authoring:end -->
-
