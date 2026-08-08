@@ -1,6 +1,7 @@
 # Intake Authoring Governance Preset
 
 Optional, stackable intake-authoring governance for GitHub Spec Kit. Version
+`0.3.1` publishes the agent-neutral `model-routing.json` contract. Version
 `0.3.0` governs traceable intake Create, Read, Update, logical Delete, bounded
 public HTTPS sources, and explicitly approved intake series.
 
@@ -54,7 +55,7 @@ and freshness without writing.*
 
 ```bash
 specify preset add \
-  --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.0.zip \
+  --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.1.zip \
   --priority 64
 specify preset list
 specify preset info intake-authoring-governance
