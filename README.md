@@ -11,8 +11,8 @@ text-first dependencies, status, decisions, and next actions. It does not
 hard-code a country, occupation, or language into the portable preset.
 
 *Optional, stackable intake-authoring governance for GitHub Spec Kit. Version
-`0.3.0` governs traceable intake Create, Read, Update, logical Delete, bounded
-public HTTPS sources, and explicitly approved intake series.*
+`0.3.1` adds the agent-neutral model-routing contract; the complete traceable
+Create, Read, Update, logical Delete, HTTPS, and series contract remains intact.*
 
 Recommended priority: `64`, after Agent Parity (`60`) and before Intake Review
 (`65`), Autonomous Run (`70`), and Parallel Autonomous Run (`80`). Spec Kit
