@@ -199,6 +199,17 @@ try {
         $Bad | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $ManifestPath -Encoding utf8NoBOM
         Invoke-Fixture (Write-JsonFixture "non-executable-${Collection}.json" $ManifestInventory) 2 'RIG017'
     }
+    # DE: Unix-Symlinks duerfen den deklarierten Lifecycle-Ort nicht umgehen.
+    # EN: Unix symlinks must not bypass the declared lifecycle location.
+    if (-not $IsWindows) {
+        $Link = Join-Path $Root 'requirements/intakes/active/Lastenheft_Link.md'
+        New-Item -ItemType SymbolicLink -Path $Link -Target $CompletedTarget | Out-Null
+        $Bad = $Manifest.Clone()
+        $Bad.orderedTargets = @(@{ path = 'requirements/intakes/active/Lastenheft_Link.md'; role = 'Primary'; status = 'Eligible'; normalizedSha256 = Get-NormalizedSha256 $CompletedTarget })
+        $Bad | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $ManifestPath -Encoding utf8NoBOM
+        Invoke-Fixture (Write-JsonFixture 'cross-collection-symlink.json' $ManifestInventory) 2 'RIG004'
+        Remove-Item -LiteralPath $Link
+    }
     $EligibleInArchive = $MixedManifest.Clone()
     $EligibleInArchive.orderedTargets = @($CompletedManifest.orderedTargets[0].Clone())
     $EligibleInArchive.orderedTargets[0].status = 'Eligible'

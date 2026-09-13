@@ -161,12 +161,14 @@ def validate_series_manifest(
         resolved_target = target_file.resolve()
         if not resolved_target.is_relative_to(repo):
             fail("RIG004", "series target resolves outside the repository")
-        in_archive = resolved_target.is_relative_to(archive_dir.resolve())
-        in_active = resolved_target.is_relative_to(active_dir.resolve()) and not in_archive
+        in_archive = target_file.is_relative_to(archive_dir)
+        in_active = target_file.is_relative_to(active_dir) and not in_archive
         if any(resolved_target.is_relative_to(directory.resolve()) for directory in excluded_dirs):
             fail("RIG017", f"series target is in a non-executable collection: {target_path}")
         if not in_active and not in_archive:
             fail("RIG017", f"series target is outside active and archive collections: {target_path}")
+        if not resolved_target.is_relative_to((archive_dir if in_archive else active_dir).resolve()):
+            fail("RIG004", "series target resolves outside its declared collection")
         if status == "Completed" and not in_archive:
             fail("RIG017", f"Completed target must be stored in archive collection: {target_path}")
         if status != "Completed" and in_archive:

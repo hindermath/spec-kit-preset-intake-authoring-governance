@@ -144,7 +144,10 @@ try {
     Write-HBText (Join-Path $Root 'RequirementsIntakeOrder.md') '# Order'
     New-Item -ItemType Directory -Path (Join-Path $Root 'requirements/baseline') -Force | Out-Null
     Write-HBText $ConfigPath ($Config | ConvertTo-Json -Depth 20)
-    Write-HBText (Join-Path $Root $ArchiveRelative) ([IO.File]::ReadAllText($Target).Replace("`n", "`r`n"))
+    # DE: Erst normalisieren, damit ein Windows-Checkout kein CRCRLF erzeugt.
+    # EN: Normalize first so a Windows checkout cannot produce CRCRLF.
+    Write-HBText (Join-Path $Root $ArchiveRelative) ([IO.File]::ReadAllText($Target).Replace("`r`n", "`n").Replace("`r", "`n").Replace("`n", "`r`n"))
+    if ((Get-HBHash (Join-Path $Root $ArchiveRelative)) -ne $Receipt.target.normalizedSha256) { throw 'Archive fixture changed normalized content' }
     Remove-Item -LiteralPath $Target
     $Manifest = @{
         status = 'Completed'; seriesId = [guid]::NewGuid().ToString()
