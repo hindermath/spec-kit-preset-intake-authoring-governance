@@ -122,6 +122,8 @@ def validate_series_manifest(
     if not isinstance(targets, list) or not targets:
         fail("RIG014", "series manifest must contain non-empty orderedTargets")
     series_status = required_text(manifest, "status", "RIG017")
+    if series_status not in {"Draft", "NeedsClarification", "Ready", "Active", "Idle", "Completed", "Deleted"}:
+        fail("RIG017", "unsupported series status")
 
     active_paths = (
         {
@@ -157,6 +159,8 @@ def validate_series_manifest(
         if normalized_sha256(target_file) != expected_hash:
             fail("RIG015", f"hash drift for {target_path}")
         status = required_text(target, "status", "RIG017")
+        if status not in {"Pending", "Blocked", "Eligible", "Active", "Completed", "Withdrawn"}:
+            fail("RIG017", f"unsupported target status: {target_path}")
         target_statuses[target_path] = status
         resolved_target = target_file.resolve()
         if not resolved_target.is_relative_to(repo):
@@ -173,6 +177,8 @@ def validate_series_manifest(
             fail("RIG017", f"Completed target must be stored in archive collection: {target_path}")
         if status != "Completed" and in_archive:
             fail("RIG017", f"non-completed target must not be stored in archive collection: {target_path}")
+        if in_active and resolved_target.is_relative_to(archive_dir.resolve()):
+            fail("RIG004", "active target resolves into the archive collection")
         if in_active:
             active_targets.add(target_path)
         if status == "Eligible":
@@ -271,6 +277,14 @@ def validate_config(data: dict, repo: Path) -> dict:
     values = list(collections.values())
     if len(values) != len(set(values)):
         fail("RIG007", "collection paths must be unique")
+
+    # DE: Verschiedene Namen duerfen nicht dieselbe physische Collection bezeichnen.
+    # EN: Distinct names must not alias the same physical collection.
+    physical_collections = [(repo / value).resolve() for value in collections.values()]
+    if any(not path.is_relative_to(repo) for path in physical_collections):
+        fail("RIG004", "collection resolves outside the repository")
+    if len(physical_collections) != len(set(physical_collections)):
+        fail("RIG007", "collection paths must resolve to distinct locations")
 
     aliases = data.get("legacyArtifactNames", [])
     if not isinstance(aliases, list) or len(aliases) > 20:
