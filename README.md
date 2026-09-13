@@ -448,6 +448,8 @@ files or granting repair authority.*
 
 Pruefnachweis und Release-Grenzen / Validation and release boundaries: [Lifecycle evidence](docs/completed-series-lifecycle.md).
 
+Generator-Kompatibilitaet / Generator compatibility: [Current release validation](docs/generator-version-compatibility.md).
+
 ## Historische Authoring-Receipts / Historical Authoring Receipts
 
 Fehlt der urspruengliche aktive Zielpfad, prueft der Receipt-Validator die
