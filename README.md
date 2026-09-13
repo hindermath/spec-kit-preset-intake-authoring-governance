@@ -1,6 +1,6 @@
 # Intake Authoring Governance Preset
 
-Aktuelle Version / Current version: **0.3.3**. Dieser Patch schliesst physische
+Aktuelle Version / Current version: **0.3.4**. Dieser Patch schliesst physische
 Collection-Aliase und unbekannte Lifecycle-Zustaende aus. Authoring prueft auch
 bestehende Receipt-Ziele und Quellen vor dem Lesen gegen die Repository-Grenze.
 
@@ -64,7 +64,7 @@ and freshness without writing.*
 
 ```bash
 specify preset add \
-  --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.3.zip \
+  --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.4.zip \
   --priority 64
 specify preset list
 specify preset info intake-authoring-governance
