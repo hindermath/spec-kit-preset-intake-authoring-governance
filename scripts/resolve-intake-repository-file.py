@@ -12,7 +12,7 @@ args = parser.parse_args()
 try:
     root = Path(args.repo).resolve(strict=True)
     path = Path(args.file).resolve(strict=True)
-    if not path.is_file() or not path.is_relative_to(root):
+    if not root.is_dir() or not path.is_relative_to(root) or not path.is_file():
         raise ValueError("outside repository")
     print(json.dumps({"path": str(path)}))
 except (OSError, RuntimeError, ValueError):

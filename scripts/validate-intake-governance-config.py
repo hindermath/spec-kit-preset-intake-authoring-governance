@@ -9,7 +9,7 @@ import json
 import re
 import sys
 import uuid
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 BCP47 = re.compile(r"^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$")
 PROFILES = {
@@ -71,7 +71,7 @@ def load_json(path: Path) -> dict:
 
 def relative(value: str) -> bool:
     candidate = PurePosixPath(value)
-    return bool(value) and not candidate.is_absolute() and ".." not in candidate.parts
+    return bool(value) and not candidate.is_absolute() and not PureWindowsPath(value).drive and "\\" not in value and ".." not in candidate.parts
 
 
 def required_text(obj: dict, key: str, code: str) -> str:
@@ -266,6 +266,9 @@ def validate_config(data: dict, repo: Path) -> dict:
         if not isinstance(value, str):
             fail("RIG006", f"roles.{key} must be a string")
         validate_path(value, f"roles.{key}")
+
+    if any(not (repo / value).resolve().is_relative_to(repo) for value in roles.values()):
+        fail("RIG004", "role path resolves outside the repository")
 
     collections = data.get("collections")
     if not isinstance(collections, dict) or set(collections) != COLLECTION_KEYS:

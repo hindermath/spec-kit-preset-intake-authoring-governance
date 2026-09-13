@@ -310,6 +310,12 @@ try {
         Invoke-Fixture (Write-JsonFixture 'english.json' $English) 0 '"activeIntakeCount": 0'
         $Root = $OriginalRoot
     }
+    foreach ($ForeignPath in @('..\outside', 'C:\outside', 'C:outside')) {
+        $Foreign = $Base.Clone()
+        $Foreign.collections = $Base.collections.Clone()
+        $Foreign.collections.backlog = $ForeignPath
+        Invoke-Fixture (Write-JsonFixture ('foreign-' + [guid]::NewGuid() + '.json') $Foreign) 2 'RIG004'
+    }
     # DE: Unbekannte Zustaende und physisch identische Collection-Wurzeln sind ungueltig.
     # EN: Unknown states and physically aliased collection roots are invalid.
     $UnknownSeries = $Manifest.Clone()
