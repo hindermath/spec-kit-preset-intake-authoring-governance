@@ -20,12 +20,16 @@ jobs:
           python-version: '3.12'
       - name: Configuration parity and zero writes
         shell: pwsh
-        run: ./tests/test-intake-governance-config.ps1
+        run: |
+          pwsh -NoProfile -File ./tests/test-intake-governance-config.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Domain regression
         shell: pwsh
         run: |
-          ./tests/test-intake-authoring-validator.ps1
-          ./tests/test-intake-authoring-lifecycle.ps1
+          pwsh -NoProfile -File ./tests/test-intake-authoring-validator.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pwsh -NoProfile -File ./tests/test-intake-authoring-lifecycle.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Tracked checkout remains unchanged
         shell: pwsh
         run: |
