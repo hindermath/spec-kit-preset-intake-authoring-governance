@@ -1,6 +1,6 @@
 # Lifecycle-Pfadgrenzen / Lifecycle path boundaries
 
-Release: 0.3.3. Date: 2026-09-13. Documentation Impact: UpdateRequired.
+Release: 0.3.4. Date: 2026-09-13. Documentation Impact: UpdateRequired.
 Owner: preset maintainer. Readers: preset consumers and maintainers. Canonical
 sources: scripts, executable fixtures and preset.yml; DE/EN colocated here.
 Navigation: README and existing validator manpages. Distribution: preset package.
@@ -45,3 +45,11 @@ Proof: native lifecycle-validation CI on the exact release head across macOS,
 Linux and Windows. The packaged .github/workflows file is source metadata for
 this preset repository. Consumers use their own root workflows; the nested copy
 does not register a consumer job. Reevaluate on path, lifecycle or overlay changes.
+
+DE: Dieser Folgepatch repariert eine fehlerhafte Versionsersetzung in der Receipt-JSON-Vorlage. Die CI parst jetzt alle ausgelieferten JSON-Vorlagen und gleicht Generatorversionen gegen preset.yml ab.
+
+EN: This follow-up repairs a faulty version substitution in the receipt JSON template. CI now parses every shipped JSON template and checks generator versions against preset.yml.
+
+DE: Dieser Folgepatch repariert eine fehlerhafte Versionsersetzung in der Receipt-JSON-Vorlage. Die CI parst jetzt alle ausgelieferten JSON-Vorlagen und gleicht Generatorversionen gegen preset.yml ab.
+
+EN: This follow-up repairs a faulty version substitution in the receipt JSON template. CI now parses every shipped JSON template and checks generator versions against preset.yml.
