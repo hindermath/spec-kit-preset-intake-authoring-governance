@@ -116,6 +116,20 @@ try {
     $Base = New-BaseConfig
     Invoke-Fixture (Write-JsonFixture 'de.json' $Base) 0 '"outcome": "Aligned"'
 
+    $NestedRepository = Join-Path $Root 'nested-repository'
+    New-Item -ItemType Directory -Path (Join-Path $NestedRepository '.git') -Force |
+        Out-Null
+    Set-Content -LiteralPath (Join-Path $NestedRepository 'Pflichtenheft.md') `
+        -Value '# Nested repository index' -Encoding utf8NoBOM
+    Invoke-Fixture (Write-JsonFixture 'nested-repository.json' $Base) 0 '"outcome": "Aligned"'
+
+    $NestedDirectory = Join-Path $Root 'ordinary-directory'
+    New-Item -ItemType Directory -Path $NestedDirectory -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $NestedDirectory 'Pflichtenheft.md') `
+        -Value '# Invalid duplicate index' -Encoding utf8NoBOM
+    Invoke-Fixture (Write-JsonFixture 'nested-duplicate.json' $Base) 2 'RIG013'
+    Remove-Item -LiteralPath $NestedDirectory -Recurse -Force
+
     # DE: Der Einzelprozess bleibt von Ready bis zum laufenden Zustand gueltig.
     # EN: The single-member process remains valid from Ready to the running state.
     $LifecyclePath = Join-Path $Root 'requirements/intakes/series/manifest.json'
@@ -187,6 +201,34 @@ try {
     Remove-Item -LiteralPath $HistoricalInFlatLayout
 
     $ManifestPath = Join-Path $Root 'requirements/intakes/series/manifest.json'
+    $SavedManifest = Get-Content -Raw -LiteralPath $ManifestPath
+    $IdleManifest = @{
+        schemaVersion = '1.0'
+        documentType = 'IntakeSeriesManifest'
+        status = 'Idle'
+        orderedTargets = @()
+        roots = @()
+        dependencies = @()
+    }
+    $IdleManifest | ConvertTo-Json -Depth 12 |
+        Set-Content -LiteralPath $ManifestPath -Encoding utf8NoBOM
+    Invoke-Fixture (Write-JsonFixture 'idle-series.json' $ManifestInventory) 0 '"eligibleCandidate": "N/A"'
+    Invoke-Fixture (Write-JsonFixture 'idle-with-standalone.json' $ManifestInventory) 0 '"activeIntakeCount": 1'
+    Invoke-Fixture (Write-JsonFixture 'idle-strict-with-standalone.json' $Base) 2 'RIG013'
+
+    $InvalidIdleManifest = $IdleManifest.Clone()
+    $InvalidIdleManifest.orderedTargets = @($Manifest.orderedTargets[0])
+    $InvalidIdleManifest.roots = @('requirements/intakes/active/Lastenheft_Beispiel.md')
+    $InvalidIdleManifest | ConvertTo-Json -Depth 12 |
+        Set-Content -LiteralPath $ManifestPath -Encoding utf8NoBOM
+    Invoke-Fixture (Write-JsonFixture 'idle-with-target.json' $ManifestInventory) 2 'RIG017'
+
+    $InvalidEmptyManifest = $IdleManifest.Clone()
+    $InvalidEmptyManifest.status = 'Ready'
+    $InvalidEmptyManifest | ConvertTo-Json -Depth 12 |
+        Set-Content -LiteralPath $ManifestPath -Encoding utf8NoBOM
+    Invoke-Fixture (Write-JsonFixture 'ready-without-target.json' $ManifestInventory) 2 'RIG014'
+
     $CompletedTarget = Join-Path $Root 'requirements/intakes/archive/Lastenheft_Abgeschlossen.md'
     Set-Content -LiteralPath $CompletedTarget -Value '# Abgeschlossen' -Encoding utf8NoBOM
     $CompletedManifest = @{
@@ -289,8 +331,7 @@ try {
         Set-Content -LiteralPath $ManifestPath -Encoding utf8NoBOM
     Invoke-Fixture (Write-JsonFixture 'completed-with-pending.json' $ManifestInventory) 2 `
         'Completed series contains non-completed targets'
-    $Manifest | ConvertTo-Json -Depth 12 |
-        Set-Content -LiteralPath $ManifestPath -Encoding utf8NoBOM
+    Set-Content -LiteralPath $ManifestPath -Value $SavedManifest -Encoding utf8NoBOM
 
     $Schema1 = $Base.Clone()
     $Schema1.schemaVersion = '1.0'
@@ -315,7 +356,6 @@ try {
     $Duplicate.collections.archive = $Duplicate.collections.active
     Invoke-Fixture (Write-JsonFixture 'duplicate.json' $Duplicate) 2 'RIG007'
 
-    $SavedManifest = Get-Content -Raw -LiteralPath $ManifestPath
     Set-Content -LiteralPath $ManifestPath -Value '{}' -Encoding utf8NoBOM
     Invoke-Fixture (Write-JsonFixture 'empty-manifest.json' $Base) 2 'RIG014'
     Set-Content -LiteralPath $ManifestPath -Value $SavedManifest -Encoding utf8NoBOM
