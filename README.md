@@ -12,6 +12,17 @@ Ready still requires exactly one candidate, and all integrity checks remain.
 Coordinated versions: Authoring 0.3.6, Review 0.2.4, Sequencing 0.2.7.
 Each preset remains independently installable; historical evidence is preserved.
 
+Gemeinsame Konfigurationsvalidatoren akzeptieren auch die bereits etablierte,
+leere `Idle`-Serie. `Idle` darf keine Ziele, Wurzeln oder Abhaengigkeiten
+enthalten; DirectoryStrict verlangt zusaetzlich ein leeres aktives Inventar.
+Indizes eigenstaendiger verschachtelter Git-Repositories sind keine Duplikate
+des uebergeordneten Projekts. Gewoehnliche doppelte Indizes bleiben gesperrt.
+
+*The shared validators also accept established empty Idle series, without
+targets, roots or dependencies. DirectoryStrict additionally requires an
+empty active inventory. Nested Git checkouts own their index; ordinary
+duplicate indexes still fail. This aligns all three Intake presets.*
+
 Version **0.3.5** veroeffentlicht die
 Korrektur fuer Receipts der eigenen Generatorversion. Beide Validatoren
 akzeptieren die aktuelle Vorlage und bekannte Schema-2-Generatoren, darunter
