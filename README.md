@@ -28,7 +28,14 @@ bleiben gesperrt. Schema, Commands und Prioritaet bleiben gleich.
 Running Active series with an Active member may have no additional Eligible
 candidate. The candidate remains N/A; this grants no execution authority.
 Ready still requires exactly one candidate, and all integrity checks remain.
-Compatible published versions: Authoring 0.3.7, Review 0.2.4, Sequencing 0.2.7.
+Coordinated patch versions: Authoring 0.3.8, Review 0.2.5, Sequencing 0.2.9.
+
+Fuer die Python-basierten Pruefungen eine gepflegte Python-Version verwenden.
+macOS-System-Python 3.9 kann gueltige UTC-Zeitstempel mit sieben Nachkommastellen
+abweisen. Die Release-Pruefung verwendet lokal Python 3.14 und in Intake-CI 3.12.
+*Use a maintained Python runtime for Python-backed validation. macOS system
+Python 3.9 can reject valid UTC timestamps with seven fractional digits.
+Release validation uses Python 3.14 locally and 3.12 in Intake CI.*
 Each preset remains independently installable; historical evidence is preserved.
 
 Gemeinsame Konfigurationsvalidatoren akzeptieren auch die bereits etablierte,
