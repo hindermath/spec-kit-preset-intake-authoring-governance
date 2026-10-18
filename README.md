@@ -1,9 +1,16 @@
 # Intake Authoring Governance Preset
 
-Aktuelle Version / Current version: **0.3.7**. Der Installationsbefehl steht
+Patch **0.3.8** liefert die verbesserte zweisprachige Einstiegs- und
+Kompositionsdokumentation. Verhalten und Berechtigungsgrenzen bleiben erhalten.
+[Release-Nachweis / Release record](docs/release-0.3.8-validation.md).
+
+*Patch 0.3.8 packages the improved bilingual getting-started and composition
+guide. Behavior and authority boundaries remain unchanged.*
+
+Aktuelle Version / Current version: **0.3.8**. Der Installationsbefehl steht
 auf einer Zeile und bindet das genaue Release-ZIP, damit die automatische
 Community-Prüfung ihn direkt auswerten kann. Die Generatorvorlage bindet
-0.3.7; bekannte Schema-2-Receipts von 0.3.6 bleiben gültig und unverändert.
+0.3.8; bekannte Schema-2-Receipts von 0.3.6 und 0.3.7 bleiben gültig und unverändert.
 Keine neue Command-, Schema-, Prioritäts- oder Ausführungsberechtigung.
 
 The installation command is a single line bound to the exact release ZIP for
@@ -141,7 +148,7 @@ and freshness without writing.*
 ## Install
 
 ```bash
-specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.7.zip --priority 64
+specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.8.zip --priority 64
 specify preset list
 specify preset info intake-authoring-governance
 specify preset resolve intake-authoring-policy-template
