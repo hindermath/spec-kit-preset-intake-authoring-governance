@@ -1,9 +1,16 @@
 # Intake Authoring Governance Preset
 
-Aktuelle Version / Current version: **0.3.7**. Der Installationsbefehl steht
+Patch **0.3.8** liefert die verbesserte zweisprachige Einstiegs- und
+Kompositionsdokumentation. Verhalten und Berechtigungsgrenzen bleiben erhalten.
+[Release-Nachweis / Release record](docs/release-0.3.8-validation.md).
+
+*Patch 0.3.8 packages the improved bilingual getting-started and composition
+guide. Behavior and authority boundaries remain unchanged.*
+
+Aktuelle Version / Current version: **0.3.8**. Der Installationsbefehl steht
 auf einer Zeile und bindet das genaue Release-ZIP, damit die automatische
 Community-Prüfung ihn direkt auswerten kann. Die Generatorvorlage bindet
-0.3.7; bekannte Schema-2-Receipts von 0.3.6 bleiben gültig und unverändert.
+0.3.8; bekannte Schema-2-Receipts von 0.3.6 und 0.3.7 bleiben gültig und unverändert.
 Keine neue Command-, Schema-, Prioritäts- oder Ausführungsberechtigung.
 
 The installation command is a single line bound to the exact release ZIP for
@@ -21,7 +28,14 @@ bleiben gesperrt. Schema, Commands und Prioritaet bleiben gleich.
 Running Active series with an Active member may have no additional Eligible
 candidate. The candidate remains N/A; this grants no execution authority.
 Ready still requires exactly one candidate, and all integrity checks remain.
-Compatible published versions: Authoring 0.3.7, Review 0.2.4, Sequencing 0.2.7.
+Coordinated patch versions: Authoring 0.3.8, Review 0.2.5, Sequencing 0.2.9.
+
+Fuer die Python-basierten Pruefungen eine gepflegte Python-Version verwenden.
+macOS-System-Python 3.9 kann gueltige UTC-Zeitstempel mit sieben Nachkommastellen
+abweisen. Die Release-Pruefung verwendet lokal Python 3.14 und in Intake-CI 3.12.
+*Use a maintained Python runtime for Python-backed validation. macOS system
+Python 3.9 can reject valid UTC timestamps with seven fractional digits.
+Release validation uses Python 3.14 locally and 3.12 in Intake CI.*
 Each preset remains independently installable; historical evidence is preserved.
 
 Gemeinsame Konfigurationsvalidatoren akzeptieren auch die bereits etablierte,
@@ -141,7 +155,7 @@ and freshness without writing.*
 ## Install
 
 ```bash
-specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.7.zip --priority 64
+specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.8.zip --priority 64
 specify preset list
 specify preset info intake-authoring-governance
 specify preset resolve intake-authoring-policy-template
