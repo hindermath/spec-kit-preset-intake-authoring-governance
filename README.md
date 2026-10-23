@@ -1,23 +1,25 @@
 # Intake Authoring Governance Preset
 
-Patch **0.3.8** liefert die verbesserte zweisprachige Einstiegs- und
+Patch **0.3.9** liefert die verbesserte zweisprachige Einstiegs- und
 Kompositionsdokumentation. Verhalten und Berechtigungsgrenzen bleiben erhalten.
-[Release-Nachweis / Release record](docs/release-0.3.8-validation.md).
+[Release-Nachweis / Release record](docs/release-0.3.9-validation.md).
 
-*Patch 0.3.8 packages the improved bilingual getting-started and composition
+*Patch 0.3.9 packages the improved bilingual getting-started and composition
 guide. Behavior and authority boundaries remain unchanged.*
 
-Aktuelle Version / Current version: **0.3.8**. Der Installationsbefehl steht
+Aktuelle Version / Current version: **0.3.9**. Der Installationsbefehl steht
 auf einer Zeile und bindet das genaue Release-ZIP, damit die automatische
 Community-Prüfung ihn direkt auswerten kann. Die Generatorvorlage bindet
-0.3.8; bekannte Schema-2-Receipts von 0.3.6 und 0.3.7 bleiben gültig und unverändert.
+0.3.9; bekannte Schema-2-Receipts einschließlich 0.3.6, 0.3.7 und 0.3.8 bleiben
+gültig und unverändert. Dieser Patch gleicht die DE-/EN-Anleitung aneinander an.
 Keine neue Command-, Schema-, Prioritäts- oder Ausführungsberechtigung.
 
 The installation command is a single line bound to the exact release ZIP for
-automatic community validation. The generator template binds 0.3.7 and keeps
-known schema-2 receipts from 0.3.6 valid without rewriting them. No new command,
+automatic community validation. The generator template binds 0.3.9 and keeps
+known schema-2 receipts, including 0.3.6, 0.3.7 and 0.3.8, valid without rewriting
+them. This patch aligns the German/English instructions. No new command,
 schema, priority or execution authority is introduced.
-See [patch validation and documentation](docs/release-0.3.7-validation.md).
+See [patch preparation and documentation](docs/release-0.3.9-validation.md).
 
 Version **0.3.6**: Laufende `Active`-Serien mit
 mindestens einem `Active`-Mitglied bleiben ohne weiteren `Eligible`-Kandidaten
@@ -28,7 +30,7 @@ bleiben gesperrt. Schema, Commands und Prioritaet bleiben gleich.
 Running Active series with an Active member may have no additional Eligible
 candidate. The candidate remains N/A; this grants no execution authority.
 Ready still requires exactly one candidate, and all integrity checks remain.
-Coordinated patch versions: Authoring 0.3.8, Review 0.2.5, Sequencing 0.2.9.
+Coordinated patch versions: Authoring 0.3.9, Review 0.2.5, Sequencing 0.2.9.
 
 Fuer die Python-basierten Pruefungen eine gepflegte Python-Version verwenden.
 macOS-System-Python 3.9 kann gueltige UTC-Zeitstempel mit sieben Nachkommastellen
@@ -155,7 +157,7 @@ and freshness without writing.*
 ## Install
 
 ```bash
-specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.8.zip --priority 64
+specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.9.zip --priority 64
 specify preset list
 specify preset info intake-authoring-governance
 specify preset resolve intake-authoring-policy-template
