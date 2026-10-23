@@ -1,5 +1,14 @@
 # Intake Authoring Governance Preset
 
+<!-- current-package: 0.3.9 -->
+
+**Leserpfad / Reader path:** [Deutsch: Einstieg, Begriffe und Fehlerhilfe](docs/user-guide.md) · [English: start, terms and troubleshooting](docs/user-guide.EN.md).
+
+Quellkandidat **v0.3.9**. Der [Release-Stand](https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/releases) wird getrennt geprüft; ein Commit auf main ist noch keine Veröffentlichung oder Installation.
+
+*Source candidate v0.3.9. The release page records actual publication separately; a main-branch commit is not publication or installation.*
+
+
 Patch **0.3.9** liefert die verbesserte zweisprachige Einstiegs- und
 Kompositionsdokumentation. Verhalten und Berechtigungsgrenzen bleiben erhalten.
 [Release-Nachweis / Release record](docs/release-0.3.9-validation.md).
@@ -30,7 +39,7 @@ bleiben gesperrt. Schema, Commands und Prioritaet bleiben gleich.
 Running Active series with an Active member may have no additional Eligible
 candidate. The candidate remains N/A; this grants no execution authority.
 Ready still requires exactly one candidate, and all integrity checks remain.
-Coordinated patch versions: Authoring 0.3.9, Review 0.2.5, Sequencing 0.2.9.
+Documentation target combination (not a new field-test claim): Authoring 0.3.9, Review 0.2.6, Sequencing 0.2.10.
 
 Fuer die Python-basierten Pruefungen eine gepflegte Python-Version verwenden.
 macOS-System-Python 3.9 kann gueltige UTC-Zeitstempel mit sieben Nachkommastellen
@@ -68,7 +77,7 @@ Optional, stackable intake-authoring governance for GitHub Spec Kit. Version
 `0.3.0` governs traceable intake Create, Read, Update, logical Delete, bounded
 public HTTPS sources, and explicitly approved intake series.
 
-Version `0.3.0` carries a project-profile learner contract into new or updated
+Version `0.3.9` carries a project-profile learner contract into new or updated
 intakes: declared audience, assumed prior knowledge, first-use terminology, and
 text-first dependencies, status, decisions, and next actions. It does not
 hard-code a country, occupation, or language into the portable preset.
@@ -234,7 +243,7 @@ Bleiben danach wesentliche Fragen offen, wird die Arbeit nicht verworfen. Das
 Preset speichert einen klar markierten Entwurf:
 
 ```text
-Status: NeedsClarification
+Status: Quellkandidat zur Sichtung / source candidate for review
 Prompt state: Blocked
 BLOCKED - DO NOT RUN
 ```
