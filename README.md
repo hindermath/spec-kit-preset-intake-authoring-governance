@@ -2,11 +2,17 @@
 
 <!-- current-package: 0.3.9 -->
 
+[Release-Abschluss und Verbesserungsprofil / Publication closeout and improvement profile](docs/release-0.3.9-validation.md).
+
+Der spätere Dokumentationsnachlauf auf main ändert das bestehende Tag-ZIP nicht.
+
+<span lang="en">The later main-branch documentation follow-up does not change the existing tag archive.</span>
+
 **Leserpfad / Reader path:** [Deutsch: Einstieg, Begriffe und Fehlerhilfe](docs/user-guide.md) · [English: start, terms and troubleshooting](docs/user-guide.EN.md).
 
-Quellkandidat **v0.3.9**. Der [Release-Stand](https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/releases) wird getrennt geprüft; ein Commit auf main ist noch keine Veröffentlichung oder Installation.
+Veröffentlichtes Paket **v0.3.9**. Der [Release-Stand](https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/releases) wird getrennt geprüft; ein Commit auf main ist noch keine Veröffentlichung oder Installation.
 
-*Source candidate v0.3.9. The release page records actual publication separately; a main-branch commit is not publication or installation.*
+*Published package v0.3.9. The release page records actual publication separately; a main-branch commit is not publication or installation.*
 
 
 Patch **0.3.9** liefert die verbesserte zweisprachige Einstiegs- und
@@ -243,7 +249,7 @@ Bleiben danach wesentliche Fragen offen, wird die Arbeit nicht verworfen. Das
 Preset speichert einen klar markierten Entwurf:
 
 ```text
-Status: Quellkandidat zur Sichtung / source candidate for review
+Status: Paket veröffentlicht; Dokumentationsnachlauf zur Sichtung / package published; documentation follow-up awaiting review
 Prompt state: Blocked
 BLOCKED - DO NOT RUN
 ```
