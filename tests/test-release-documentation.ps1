@@ -32,10 +32,10 @@ Assert-Documentation ([regex]::IsMatch($readme,'(?m)^\s*'+[regex]::Escape($line)
 Assert-Documentation (Test-Path -LiteralPath (Join-Path $root "docs/release-$version-validation.md")) 'current release preparation record exists'
 switch($id){
 'intake-authoring-governance' {
-        Assert-Documentation ($readme.Contains("0.3.9; bekannte Schema-2-Receipts")) 'German generator claim binds current release'
-        Assert-Documentation ($readme.Contains("generator template binds 0.3.9")) 'English generator claim binds same release'
+        Assert-Documentation ($readme.Contains("$version; bekannte Schema-2-Receipts")) 'German generator claim binds current release'
+        Assert-Documentation ($readme.Contains("generator template binds $version")) 'English generator claim binds same release'
         $receipt=Get-Content (Join-Path $root 'templates/intake-authoring-receipt-template.json') -Raw|ConvertFrom-Json
-        Assert-Documentation ($receipt.generator.version -ceq '0.3.9' -and $receipt.schemaVersion -ceq '2.0') 'shipped generator metadata unchanged in schema and bound to current release'
+        Assert-Documentation ($receipt.generator.version -ceq $version -and $receipt.schemaVersion -ceq '2.0') 'shipped generator metadata unchanged in schema and bound to current release'
         foreach($path in @('scripts/validate-intake-authoring-receipt.sh','scripts/validate-intake-authoring-receipt.ps1','tests/test-intake-authoring-lifecycle.ps1')){
             Assert-Documentation ([IO.File]::ReadAllText((Join-Path $root $path)).Contains("'0.3.8'") -or [IO.File]::ReadAllText((Join-Path $root $path)).Contains('"0.3.8"')) 'previous stable generator retained explicitly'
         }

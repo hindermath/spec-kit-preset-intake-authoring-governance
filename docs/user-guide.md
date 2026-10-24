@@ -77,7 +77,7 @@ Rollen beschreiben Aufgaben, keinen Modellnamen und keine Qualitätsgarantie. Ma
 
 Eine modellfreie Skriptprüfung und eine Agentenbewertung sind verschiedene Tätigkeiten. Modellaufrufe, auch Zugangs-Preflights, können trotz read-only-Verhalten Kontingent verbrauchen. Diese Dokumentation beauftragt keine Probe und keinen Anbieterwechsel. Sie enthält keine neue dynamische Routing-Implementierung.
 
-Dokumentations-Zielkombination: Authoring **0.3.9**, Review **0.2.6**, Sequencing **0.2.10**. Diese Kandidatenkombination ist kein behaupteter Feldtest. Verifizierte Tests werden im PR getrennt aufgeführt.
+Dokumentations-Zielkombination: Authoring **0.3.10**, Review **0.2.7**, Sequencing **0.2.11**. Diese Kandidatenkombination ist kein behaupteter Feldtest. Verifizierte Tests werden im PR getrennt aufgeführt.
 
 <a id="help"></a>
 

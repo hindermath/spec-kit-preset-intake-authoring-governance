@@ -29,13 +29,13 @@ guide. Behavior and authority boundaries remain unchanged.*
 Paketversion / Package version: **0.3.10**. Der Installationsbefehl steht
 auf einer Zeile und bindet das genaue Release-ZIP, damit die automatische
 Community-Prüfung ihn direkt auswerten kann. Die Generatorvorlage bindet
-0.3.9; bekannte Schema-2-Receipts einschließlich 0.3.6, 0.3.7 und 0.3.8 bleiben
+0.3.10; bekannte Schema-2-Receipts einschließlich 0.3.6, 0.3.7, 0.3.8 und 0.3.9 bleiben
 gültig und unverändert. Dieser Patch gleicht die DE-/EN-Anleitung aneinander an.
 Keine neue Command-, Schema-, Prioritäts- oder Ausführungsberechtigung.
 
 The installation command is a single line bound to the exact release ZIP for
-automatic community validation. The generator template binds 0.3.9 and keeps
-known schema-2 receipts, including 0.3.6, 0.3.7 and 0.3.8, valid without rewriting
+automatic community validation. The generator template binds 0.3.10 and keeps
+known schema-2 receipts, including 0.3.6, 0.3.7, 0.3.8 and 0.3.9, valid without rewriting
 them. This patch aligns the German/English instructions. No new command,
 schema, priority or execution authority is introduced.
 See [patch preparation and documentation](docs/release-0.3.9-validation.md).
@@ -49,7 +49,7 @@ bleiben gesperrt. Schema, Commands und Prioritaet bleiben gleich.
 Running Active series with an Active member may have no additional Eligible
 candidate. The candidate remains N/A; this grants no execution authority.
 Ready still requires exactly one candidate, and all integrity checks remain.
-Documentation target combination (not a new field-test claim): Authoring 0.3.9, Review 0.2.6, Sequencing 0.2.10.
+Documentation target combination (not a new field-test claim): Authoring 0.3.10, Review 0.2.7, Sequencing 0.2.11.
 
 Fuer die Python-basierten Pruefungen eine gepflegte Python-Version verwenden.
 macOS-System-Python 3.9 kann gueltige UTC-Zeitstempel mit sieben Nachkommastellen

@@ -18,9 +18,9 @@ v0.3.10 paketiert die abgenommene Statuskorrektur und die DE-/EN-Verbesserungspr
 
 v0.3.10 packages the accepted status correction and bilingual improvement profiles. Historical candidate text, tags and archives remain unchanged. The linked base-package record applies to v0.3.9, not as proof of the new release.
 
-Commands, Rollen, Prioritäten, Validatorlogik und Generator-/Receipt-Schemas bleiben unverändert. Paketversion und Generatorversion sind getrennt. Tests prüfen die neue Paketkennung, den historischen Veröffentlichungsnachweis und die bestehenden Negativfälle jeweils getrennt.
+Commands, Rollen, Prioritäten und Generator-/Receipt-Schemas bleiben unverändert. Gemäß ausdrücklicher Owner-Freigabe vom 24.10.2026 wird die Generatorversions-Metadatenbindung an dieses Paket fortgeschrieben; bisher gültige Receipts bleiben gültig. Authoring ergänzt dafür ausschließlich die bekannte Vorgängerversion in der strikten Schema-2-Versionsliste. Unbekannte Versionen und falsche Schema-Kombinationen bleiben blockiert. Es entstehen keine neuen Felder, Gates, Befugnisse oder Routing-Funktionen.
 
-Commands, roles, priorities, runtime validators and generator/receipt schemas remain unchanged. Package and generator versions are separate. Tests independently check new package identity, historical publication and existing negative cases.
+Commands, roles, priorities and generator/receipt schemas remain unchanged. Explicit owner approval on 24 October 2026 permits binding generator-version metadata to this package while preserving valid earlier receipts. Authoring only adds the known predecessor to the strict schema-2 version list; unknown versions and invalid schema combinations remain blocked. No new fields, gates, authority or routing features are introduced. Package identity, historical publication and negative cases are tested separately.
 
 ## Prüfgates / Verification gates
 

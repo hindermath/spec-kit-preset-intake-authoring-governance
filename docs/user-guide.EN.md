@@ -75,7 +75,7 @@ Roles describe tasks, not a model name or quality guarantee. Read the actual mod
 
 A model-free script check and an agent assessment are different activities. Model calls, including model-access preflights, can consume quota even when they are read-only. No probe or provider switch is authorized by this documentation. No new dynamic-routing implementation is included.
 
-Documentation target combination: Authoring **0.3.9**, Review **0.2.6**, Sequencing **0.2.10**. This candidate combination is not a claimed field test. Verified tests are listed separately in the PR.
+Documentation target combination: Authoring **0.3.10**, Review **0.2.7**, Sequencing **0.2.11**. This candidate combination is not a claimed field test. Verified tests are listed separately in the PR.
 
 <a id="help"></a>
 
