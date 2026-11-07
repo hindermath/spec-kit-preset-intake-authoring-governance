@@ -117,6 +117,9 @@ def has_secret(text):
     return any(re.search(pattern, text) for pattern in patterns)
 
 try:
+    receipt_path = receipt_path.resolve(strict=True)
+    if not receipt_path.is_relative_to(repo):
+        raise ValueError("receipt path resolves outside the repository")
     receipt_raw = receipt_path.read_bytes()
     receipt_text = normalized_bytes(receipt_path).decode("utf-8")
     data = json.loads(receipt_raw.decode("utf-8-sig"))
@@ -126,7 +129,7 @@ except Exception as exc:
 if not isinstance(data, dict):
     errors.append("receipt root must be an object")
     data = {}
-if has_secret(receipt_text):
+if has_secret(receipt_text) or has_secret(json.dumps(data, ensure_ascii=False)):
     errors.append("receipt contains a credential or private key pattern")
 
 schema_version = data.get("schemaVersion")

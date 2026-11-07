@@ -232,6 +232,26 @@ try {
     Write-Utf8Text -Path $ReceiptPath -Text ($Receipt | ConvertTo-Json -Depth 20)
     Invoke-ReceiptValidators -Receipt $ReceiptPath -Repo $TempRoot -ExpectedExit 0 -Case 'ready fixture'
 
+    $Receipt.authorityEvidence = 'github_pat_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456'
+    $EscapedReceipt = ($Receipt | ConvertTo-Json -Depth 20).Replace('github_pat_', 'github_p\u0061t_')
+    Write-Utf8Text -Path $ReceiptPath -Text $EscapedReceipt
+    Invoke-ReceiptValidators -Receipt $ReceiptPath -Repo $TempRoot -ExpectedExit 2 -Case 'escaped receipt credential'
+    $ReadyJson = $Receipt | ConvertTo-Json -Depth 20
+    $DeepSecret = ('{"level":' * 110) + '"github_p\u0061t_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456"' + ('}' * 110)
+    $DeepReceipt = $ReadyJson.Substring(0, $ReadyJson.Length - 1) + ',"extra":' + $DeepSecret + '}'
+    Write-Utf8Text -Path $ReceiptPath -Text $DeepReceipt
+    Invoke-ReceiptValidators -Receipt $ReceiptPath -Repo $TempRoot -ExpectedExit 2 -Case 'deep escaped receipt credential'
+    $Receipt.authorityEvidence = 'Default: no explicit remote authority'
+    Write-Utf8Text -Path $ReceiptPath -Text ($Receipt | ConvertTo-Json -Depth 20)
+
+    $OutsideReceipt = Join-Path $OutsideRoot 'receipt.json'
+    Copy-Item $ReceiptPath $OutsideReceipt
+    Remove-Item $ReceiptPath
+    New-Item -ItemType SymbolicLink -Path $ReceiptPath -Target $OutsideReceipt | Out-Null
+    Invoke-ReceiptValidators -Receipt $ReceiptPath -Repo $TempRoot -ExpectedExit 2 -Case 'external receipt symlink'
+    Remove-Item $ReceiptPath -Force
+    Copy-Item $OutsideReceipt $ReceiptPath
+
     # DE: Identischer Inhalt ausserhalb des Repos darf keine gueltige Dateibindung ergeben.
     # EN: Identical content outside the repository must not satisfy a file binding.
     $OutsideTarget = Join-Path $OutsideRoot 'target.md'

@@ -173,6 +173,24 @@ function Test-IntakeAuthoringReceipt {
         return $false
     }
 
+    function Test-HBParsedSecret($Value) {
+        if ($Value -is [string]) { return (Test-HBSecret $Value) }
+        if ($Value -is [System.Collections.IDictionary]) {
+            foreach ($Key in $Value.Keys) {
+                if ((Test-HBSecret ([string]$Key)) -or (Test-HBParsedSecret $Value[$Key])) { return $true }
+            }
+        } elseif ($Value -is [pscustomobject]) {
+            foreach ($Property in $Value.PSObject.Properties) {
+                if ((Test-HBSecret $Property.Name) -or (Test-HBParsedSecret $Property.Value)) { return $true }
+            }
+        } elseif ($Value -is [System.Collections.IEnumerable]) {
+            foreach ($Item in $Value) {
+                if (Test-HBParsedSecret $Item) { return $true }
+            }
+        }
+        return $false
+    }
+
     if (-not (Test-Path -LiteralPath $Receipt -PathType Leaf)) {
         throw "Receipt file not found: $Receipt"
     }
@@ -180,9 +198,10 @@ function Test-IntakeAuthoringReceipt {
         $ReceiptText = Get-HBNormalizedText $Receipt
         $Data = $ReceiptText | ConvertFrom-Json
     } catch {
-        throw "Invalid receipt: $($_.Exception.Message)"
+        [Console]::Error.WriteLine("ERROR: Invalid receipt: $($_.Exception.Message)")
+        return 2
     }
-    if (Test-HBSecret $ReceiptText) {
+    if ((Test-HBSecret $ReceiptText) -or (Test-HBParsedSecret $Data)) {
         $Errors.Add('receipt contains a credential or private key pattern')
     }
 
