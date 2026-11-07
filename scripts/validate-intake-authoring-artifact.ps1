@@ -66,14 +66,43 @@ function Test-HBTime([string]$Value, [string]$Label) {
         $Errors.Add("${Label} must be an ISO-8601 UTC timestamp")
     }
 }
+function Resolve-HBPhysicalPath([string]$Path) {
+    $full = [IO.Path]::GetFullPath($Path)
+    $root = [IO.Path]::GetPathRoot($full)
+    $current = $root
+    foreach ($segment in $full.Substring($root.Length).Split([char[]]@('/', '\'), [StringSplitOptions]::RemoveEmptyEntries)) {
+        $current = [IO.Path]::Combine($current, $segment)
+        $entry = Get-Item -LiteralPath $current -Force -ErrorAction Stop
+        if (($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+            $resolved = $entry.ResolveLinkTarget($true)
+            if ($null -eq $resolved) { throw "Cannot resolve symlink: $current" }
+            $current = $resolved.FullName
+        }
+    }
+    return [IO.Path]::GetFullPath($current)
+}
 function Test-HBFile([string]$Value, [string]$Label, [string]$Hash = '', [switch]$Absent) {
     if (-not (Test-HBRelative $Value)) { $Errors.Add("${Label} must be repository-relative"); return }
     $Path = Join-Path $RepoRoot $Value
     if ($Absent) {
-        if (Test-Path -LiteralPath $Path) { $Errors.Add("${Label} must no longer exist") }
+        if ($null -ne (Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue)) {
+            $Errors.Add("${Label} must no longer exist")
+        }
         return
     }
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { $Errors.Add("${Label} is missing: $Value"); return }
+    try {
+        $physicalRoot = Resolve-HBPhysicalPath $RepoRoot
+        $Path = Resolve-HBPhysicalPath $Path
+        $comparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
+        $prefix = $physicalRoot.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+        if (-not $Path.StartsWith($prefix, $comparison) -or -not [IO.File]::Exists($Path)) {
+            $Errors.Add("${Label} resolves outside repository or is missing: $Value")
+            return
+        }
+    } catch {
+        $Errors.Add("${Label} is missing or cannot be resolved: $Value")
+        return
+    }
     if ($Hash) {
         Test-HBHash $Hash "${Label} hash"
         try { $Actual = Get-HBHash $Path } catch { $Errors.Add("${Label} is not strict UTF-8 text: $($_.Exception.Message)"); return }

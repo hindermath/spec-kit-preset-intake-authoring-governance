@@ -40,7 +40,7 @@ def text(obj, key, label):
 
 def relative(value):
     path = PurePosixPath(value)
-    return not path.is_absolute() and ".." not in path.parts
+    return not path.is_absolute() and ".." not in path.parts and "\\" not in value
 
 def normalized(path):
     raw = path.read_bytes()
@@ -79,11 +79,16 @@ def check_relative_file(value, label, expected_hash=None, must_be_absent=False):
         return
     path = repo / value
     if must_be_absent:
-        if path.exists():
+        if path.exists() or path.is_symlink():
             errors.append(f"{label} must no longer exist")
         return
-    if not path.is_file():
+    try:
+        path = path.resolve(strict=True)
+    except (OSError, RuntimeError):
         errors.append(f"{label} is missing: {value}")
+        return
+    if not path.is_relative_to(repo) or not path.is_file():
+        errors.append(f"{label} resolves outside repository or is missing: {value}")
         return
     if expected_hash is not None:
         check_hash(expected_hash, f"{label} hash")

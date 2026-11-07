@@ -92,6 +92,7 @@ No open question.
 }
 
 $Root = Join-Path ([IO.Path]::GetTempPath()) ("intake-authoring-lifecycle-" + [Guid]::NewGuid())
+$OutsideRoot = "${Root}-outside"
 try {
     New-Item -ItemType Directory -Path $Root | Out-Null
     $IntakeId = [Guid]::NewGuid().ToString()
@@ -327,10 +328,20 @@ try {
     $TombstonePath = Join-Path $Root 'specs/intake-authoring-tombstones/example.json'
     Write-HBText $TombstonePath ($Tombstone | ConvertTo-Json -Depth 30)
     Invoke-HBPair Artifact $TombstonePath $Root 0 'logical delete'
+    New-Item -ItemType Directory -Path $OutsideRoot -Force | Out-Null
+    $ArchivedTargetPath = Join-Path $Root $ArchivedTarget
+    $OutsideArchivedTarget = Join-Path $OutsideRoot 'target.md'
+    Copy-Item -LiteralPath $ArchivedTargetPath -Destination $OutsideArchivedTarget
+    Remove-Item -LiteralPath $ArchivedTargetPath
+    New-Item -ItemType SymbolicLink -Path $ArchivedTargetPath -Target $OutsideArchivedTarget | Out-Null
+    Invoke-HBPair Artifact $TombstonePath $Root 2 'external archive symlink' 'outside repository'
+    Remove-Item -LiteralPath $ArchivedTargetPath -Force
+    Copy-Item -LiteralPath $OutsideArchivedTarget -Destination $ArchivedTargetPath
     Copy-Item (Join-Path $Root $ArchivedTarget) $Target
     Invoke-HBPair Artifact $TombstonePath $Root 2 'active target after delete rejection'
 
     Write-Host 'PASS: schema 2 URL, series graph, transaction, tombstone, and Bash/PowerShell parity'
 } finally {
     Remove-Item -LiteralPath $Root -Recurse -Force -ErrorAction SilentlyContinue
+    if ($OutsideRoot) { Remove-Item -LiteralPath $OutsideRoot -Recurse -Force -ErrorAction SilentlyContinue }
 }
