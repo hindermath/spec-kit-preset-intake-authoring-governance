@@ -94,6 +94,13 @@ function Test-IntakeAuthoringReceipt {
     }
 
     function Get-HBGitBlobNormalizedHash([string]$ObjectId) {
+        $SizeOutput = @(& git -C $RepoRoot cat-file -s $ObjectId 2>$null)
+        $BlobSize = [long]0
+        if ($LASTEXITCODE -ne 0 -or
+            -not [long]::TryParse(($SizeOutput -join '').Trim(), [ref]$BlobSize) -or
+            $BlobSize -lt 0 -or $BlobSize -gt 8388608) {
+            throw 'legacy Git blob is missing or exceeds 8 MiB limit'
+        }
         $StartInfo = [Diagnostics.ProcessStartInfo]::new()
         $StartInfo.FileName = 'git'
         $StartInfo.UseShellExecute = $false

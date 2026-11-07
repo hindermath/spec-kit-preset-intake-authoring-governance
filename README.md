@@ -318,6 +318,8 @@ supersede. With explicit current update authority, use provenance mode
 `LegacyAdoption`. Record the prior normalized target hash as an ordered source,
 plus either its exact Git blob or a clearly bounded snapshot-only proof. Keep
 the same target path and never fabricate an earlier receipt.
+The validators read Git blobs only up to 8 MiB; use bounded snapshot evidence
+or split the source if the historical blob is larger.
 
 Ein bestehender Intake aus der Zeit vor diesem Preset besitzt kein
 wahrheitsgemaesses Vorgänger-Receipt. Mit ausdruecklicher aktueller
@@ -325,6 +327,8 @@ Update-Autoritaet wird `LegacyAdoption` verwendet. Der vorherige normalisierte
 Zielhash wird als geordnete Quelle und zusammen mit dem exakten Git-Blob oder
 einer klar begrenzten Snapshot-Evidence festgehalten. Der Zielpfad bleibt
 unveraendert; ein frueheres Receipt wird nicht erfunden.
+Die Validatoren lesen Git-Blobs nur bis 8 MiB; bei groesseren historischen
+Blobs ist begrenzte Snapshot-Evidence oder eine Aufteilung der Quelle noetig.
 
 ## Source Contract / Quellenvertrag
 

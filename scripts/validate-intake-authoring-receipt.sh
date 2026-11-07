@@ -33,6 +33,7 @@ from urllib.parse import urlsplit
 receipt_path = Path(sys.argv[1])
 repo = Path(sys.argv[2]).resolve()
 errors = []
+MAX_LEGACY_BLOB_BYTES = 8 * 1024 * 1024
 
 def required_text(obj, key, label):
     value = obj.get(key) if isinstance(obj, dict) else None
@@ -517,6 +518,13 @@ else:
                 errors.append("legacyAdoption.priorGitBlob must be a Git object id")
             else:
                 try:
+                    size_result = subprocess.run(
+                        ["git", "-C", str(repo), "cat-file", "-s", legacy_blob],
+                        check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                    )
+                    blob_size = int(size_result.stdout.strip())
+                    if blob_size < 0 or blob_size > MAX_LEGACY_BLOB_BYTES:
+                        raise ValueError("legacy Git blob exceeds 8 MiB limit")
                     completed = subprocess.run(
                         ["git", "-C", str(repo), "cat-file", "blob", legacy_blob],
                         check=True,

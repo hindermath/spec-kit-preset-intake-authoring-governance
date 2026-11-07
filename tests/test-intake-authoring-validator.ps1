@@ -44,7 +44,8 @@ function Invoke-ReceiptValidators {
         [Parameter(Mandatory)][string]$Receipt,
         [Parameter(Mandatory)][string]$Repo,
         [Parameter(Mandatory)][int]$ExpectedExit,
-        [Parameter(Mandatory)][string]$Case
+        [Parameter(Mandatory)][string]$Case,
+        [string]$ExpectedMessage = ''
     )
 
     $PowerShellValidator = Join-Path $PresetRoot 'scripts/validate-intake-authoring-receipt.ps1'
@@ -53,6 +54,9 @@ function Invoke-ReceiptValidators {
     if ($PowerShellExit -ne $ExpectedExit) {
         throw "${Case}: PowerShell exit ${PowerShellExit}, expected ${ExpectedExit}: $($PowerShellOutput -join ' | ')"
     }
+    if ($ExpectedMessage -and ($PowerShellOutput -join ' ') -notmatch [regex]::Escape($ExpectedMessage)) {
+        throw "${Case}: PowerShell cause missing ${ExpectedMessage}: $($PowerShellOutput -join ' | ')"
+    }
 
     if (Get-Command bash -ErrorAction SilentlyContinue) {
         $BashValidator = Join-Path $PresetRoot 'scripts/validate-intake-authoring-receipt.sh'
@@ -60,6 +64,9 @@ function Invoke-ReceiptValidators {
         $BashExit = $LASTEXITCODE
         if ($BashExit -ne $ExpectedExit) {
             throw "${Case}: Bash exit ${BashExit}, expected ${ExpectedExit}: $($BashOutput -join ' | ')"
+        }
+        if ($ExpectedMessage -and ($BashOutput -join ' ') -notmatch [regex]::Escape($ExpectedMessage)) {
+            throw "${Case}: Bash cause missing ${ExpectedMessage}: $($BashOutput -join ' | ')"
         }
     }
 }
@@ -376,6 +383,22 @@ try {
     $Receipt.nextAction = '$speckit-intake-review intakes/example.md'
     Write-Utf8Text -Path $ReceiptPath -Text ($Receipt | ConvertTo-Json -Depth 20)
     Invoke-ReceiptValidators -Receipt $ReceiptPath -Repo $TempRoot -ExpectedExit 0 -Case 'legacy Git-blob adoption'
+
+    $OversizePath = Join-Path $TempRoot 'legacy/oversize.md'
+    Write-Utf8Text -Path $OversizePath -Text ('A' * 8388609)
+    $OversizeBlob = (& git -C $TempRoot hash-object -w -- $OversizePath).Trim()
+    if ($LASTEXITCODE -ne 0) { throw 'Could not create oversized legacy blob fixture' }
+    $OversizeHash = Get-NormalizedHash $OversizePath
+    $Receipt.sources[0].normalizedSha256 = $OversizeHash
+    $Receipt.sources[0].gitBlob = $OversizeBlob
+    $Receipt.legacyAdoption.priorTargetNormalizedSha256 = $OversizeHash
+    $Receipt.legacyAdoption.priorGitBlob = $OversizeBlob
+    Write-Utf8Text -Path $ReceiptPath -Text ($Receipt | ConvertTo-Json -Depth 20)
+    Invoke-ReceiptValidators -Receipt $ReceiptPath -Repo $TempRoot -ExpectedExit 2 -Case 'oversized legacy Git blob' -ExpectedMessage '8 MiB limit'
+    $Receipt.sources[0].normalizedSha256 = $LegacyHash
+    $Receipt.sources[0].gitBlob = $LegacyBlob
+    $Receipt.legacyAdoption.priorTargetNormalizedSha256 = $LegacyHash
+    $Receipt.legacyAdoption.priorGitBlob = $LegacyBlob
 
     $Receipt.updateAuthorized = $false
     Write-Utf8Text -Path $ReceiptPath -Text ($Receipt | ConvertTo-Json -Depth 20)
