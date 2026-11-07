@@ -156,9 +156,52 @@ switch ($DocumentType) {
             $MemberIds.Add($IntakeId)
             Test-HBFile (Get-HBText $Member 'path' $Label) "${Label}.path" (Get-HBText $Member 'normalizedSha256' $Label)
             Test-HBFile (Get-HBText $Member 'receiptPath' $Label) "${Label}.receiptPath"
+            if ($Status -eq 'ReadyForReview') {
+                try {
+                    $receiptPath = Resolve-HBPhysicalPath (Join-Path $RepoRoot (Get-HBText $Member 'receiptPath' $Label))
+                    $physicalRoot = Resolve-HBPhysicalPath $RepoRoot
+                    $prefix = $physicalRoot.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+                    $comparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
+                    if (-not $receiptPath.StartsWith($prefix, $comparison)) { throw 'member receipt resolves outside repository' }
+                    $validationOutput = & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'validate-intake-authoring-receipt.ps1') `
+                        -Receipt $receiptPath -Repo $RepoRoot 2>&1
+                    if ($LASTEXITCODE -ne 0) { throw 'member receipt failed full validation' }
+                    $memberReceipt = Get-Content -LiteralPath $receiptPath -Raw -Encoding UTF8 | ConvertFrom-Json
+                    $memberTarget = Get-HBProperty $memberReceipt 'target'
+                    $memberSeries = Get-HBProperty $memberReceipt 'series'
+                    $manifestRelative = [IO.Path]::GetRelativePath($physicalRoot, (Resolve-HBPhysicalPath $Artifact)).Replace('\', '/')
+                    $receiptIntakeId = [string](Get-HBProperty $memberReceipt 'intakeId')
+                    if ($receiptIntakeId -cne $IntakeId) { throw 'member receipt intakeId does not match series member' }
+                    if ([string](Get-HBProperty $memberReceipt 'schemaVersion') -cne '2.0' -or
+                        [string](Get-HBProperty $memberReceipt 'documentType') -cne 'IntakeReceipt' -or
+                        [string](Get-HBProperty $memberReceipt 'status') -cne 'ReadyForReview') {
+                        throw 'member receipt schema or status is invalid'
+                    }
+                    if ([string](Get-HBProperty $memberTarget 'path') -cne [string](Get-HBProperty $Member 'path') -or
+                        [string](Get-HBProperty $memberTarget 'normalizedSha256') -cne [string](Get-HBProperty $Member 'normalizedSha256')) {
+                        throw 'member receipt target does not match series member'
+                    }
+                    if ([string](Get-HBProperty $memberSeries 'seriesId') -cne [string](Get-HBProperty $Data 'seriesId') -or
+                        [string](Get-HBProperty $memberSeries 'manifestPath') -cne $manifestRelative -or
+                        [string](Get-HBProperty $memberSeries 'role') -cne [string](Get-HBProperty $Member 'role')) {
+                        throw 'member receipt series binding does not match member'
+                    }
+                    $receiptOrder = Get-HBProperty $memberSeries 'order'
+                    if (($receiptOrder -isnot [int] -and $receiptOrder -isnot [long]) -or
+                        $receiptOrder -ne (Get-HBProperty $Member 'order')) {
+                        throw 'member receipt order does not match series member'
+                    }
+                } catch {
+                    $Errors.Add("${Label}.receiptPath is not bound to this member: $($_.Exception.Message)")
+                }
+            }
             [void](Get-HBText $Member 'title' $Label)
             [void](Get-HBText $Member 'role' $Label)
-            if ((Get-HBProperty $Member 'order') -ne ($Index + 1)) { $Errors.Add("${Label}.order must be $($Index + 1)") }
+            $memberOrder = Get-HBProperty $Member 'order'
+            if (($memberOrder -isnot [int] -and $memberOrder -isnot [long]) -or
+                $memberOrder -ne ($Index + 1)) {
+                $Errors.Add("${Label}.order must be $($Index + 1)")
+            }
             foreach ($Previous in @(Get-HBProperty $Member 'supersedesIntakeIds')) { Test-HBUuid ([string]$Previous) "${Label}.supersedesIntakeIds[]" }
         }
         if (($Ordered -join '|') -ne ($MemberIds -join '|') -or @($Ordered | Select-Object -Unique).Count -ne $Ordered.Count) {

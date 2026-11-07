@@ -18,10 +18,11 @@ while [ "$#" -gt 0 ]; do
 done
 [ -n "$artifact" ] || { printf 'ERROR: --artifact is required\n' >&2; exit 2; }
 
-python3 - "$artifact" "$repo" <<'PY'
+python3 - "$artifact" "$repo" "$(cd "$(dirname "$0")" && pwd)" <<'PY'
 import hashlib
 import json
 import re
+import subprocess
 import sys
 import uuid
 from datetime import datetime
@@ -29,6 +30,7 @@ from pathlib import Path, PurePosixPath
 
 artifact_path = Path(sys.argv[1])
 repo = Path(sys.argv[2]).resolve()
+script_dir = Path(sys.argv[3])
 errors = []
 
 def text(obj, key, label):
@@ -174,6 +176,38 @@ if document_type == "IntakeSeries":
         member_hash = text(member, "normalizedSha256", label)
         check_relative_file(path, f"{label}.path", member_hash)
         check_relative_file(receipt, f"{label}.receiptPath")
+        if status == "ReadyForReview" and relative(receipt):
+            try:
+                receipt_file = (repo / receipt).resolve(strict=True)
+                if not receipt_file.is_relative_to(repo):
+                    raise ValueError("member receipt resolves outside repository")
+                receipt_validation = subprocess.run(
+                    ["bash", str(script_dir / "validate-intake-authoring-receipt.sh"),
+                     "--receipt", str(receipt_file), "--repo", str(repo)],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+                )
+                if receipt_validation.returncode != 0:
+                    raise ValueError("member receipt failed full validation")
+                member_receipt = json.loads(normalized(receipt_file).decode("utf-8"))
+                member_target = member_receipt.get("target", {})
+                member_series = member_receipt.get("series", {})
+                manifest_relative = artifact_path.resolve(strict=True).relative_to(repo).as_posix()
+                if (member_receipt.get("schemaVersion") != "2.0"
+                        or member_receipt.get("documentType") != "IntakeReceipt"
+                        or member_receipt.get("status") != "ReadyForReview"
+                        or member_receipt.get("intakeId") != intake_id
+                        or not isinstance(member_target, dict)
+                        or member_target.get("path") != path
+                        or member_target.get("normalizedSha256") != member_hash
+                        or not isinstance(member_series, dict)
+                        or member_series.get("seriesId") != series_id
+                        or member_series.get("manifestPath") != manifest_relative
+                        or type(member_series.get("order")) is not int
+                        or member_series.get("order") != member.get("order")
+                        or member_series.get("role") != member.get("role")):
+                    raise ValueError("member receipt does not match series member")
+            except (OSError, RuntimeError, UnicodeDecodeError, ValueError, AttributeError) as exc:
+                errors.append(f"{label}.receiptPath is not bound to this member: {exc}")
         text(member, "title", label)
         text(member, "role", label)
         order = member.get("order")

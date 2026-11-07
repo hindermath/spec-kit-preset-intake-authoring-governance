@@ -268,12 +268,26 @@ try {
     $SecondReceiptRelative = 'specs/intake-authoring-receipts/second.json'
     $SecondTarget = Join-Path $Root $SecondTargetRelative
     Write-HBText $SecondTarget (New-HBIntake $SecondTargetRelative)
-    Write-HBText (Join-Path $Root $SecondReceiptRelative) '{}'
+    $SecondReceiptPath = Join-Path $Root $SecondReceiptRelative
     $ReviewRelative = 'specs/intake-authoring-series/example/intake-review-request.json'
     Write-HBText (Join-Path $Root $ReviewRelative) '{}'
     $ProposalRelative = 'specs/intake-authoring-operations/proposal.json'
     Write-HBText (Join-Path $Root $ProposalRelative) '{"approved":true}'
     $SeriesId = [Guid]::NewGuid().ToString()
+    $SeriesRelative = 'specs/intake-authoring-series/example/series.json'
+    $Receipt.series = [ordered]@{
+        seriesId = $SeriesId; manifestPath = $SeriesRelative; order = 1; role = 'Foundation'; supersedesIntakeIds = @()
+    }
+    Write-HBText $ReceiptPath ($Receipt | ConvertTo-Json -Depth 30)
+    $SecondReceipt = ($Receipt | ConvertTo-Json -Depth 30) | ConvertFrom-Json -AsHashtable
+    $SecondReceipt.receiptId = [Guid]::NewGuid().ToString()
+    $SecondReceipt.intakeId = $SecondId
+    $SecondReceipt.target.path = $SecondTargetRelative
+    $SecondReceipt.target.normalizedSha256 = Get-HBHash $SecondTarget
+    $SecondReceipt.series.order = 2
+    $SecondReceipt.series.role = 'Follow-up'
+    $SecondReceipt.nextAction = "`$speckit-intake-review $SecondTargetRelative"
+    Write-HBText $SecondReceiptPath ($SecondReceipt | ConvertTo-Json -Depth 30)
     $Series = [ordered]@{
         schemaVersion = '1.0'; documentType = 'IntakeSeries'; seriesId = $SeriesId; version = 1; status = 'ReadyForReview'
         operationId = $OperationId; proposalNormalizedSha256 = Get-HBHash (Join-Path $Root $ProposalRelative)
@@ -287,9 +301,27 @@ try {
         coverage = @([ordered]@{ sourceId = 'SRC001'; topic = 'SQLite docs'; intakeIds = @($IntakeId, $SecondId); disposition = 'Covered' })
         overlapDecisions = @(); reviewRequestPath = $ReviewRelative; nextAction = '$speckit-intake-review the approved series'
     }
-    $SeriesPath = Join-Path $Root 'specs/intake-authoring-series/example/series.json'
+    $SeriesPath = Join-Path $Root $SeriesRelative
     Write-HBText $SeriesPath ($Series | ConvertTo-Json -Depth 30)
     Invoke-HBPair Artifact $SeriesPath $Root 0 'approved series'
+    $SecondReceipt.intakeId = [Guid]::NewGuid().ToString()
+    Write-HBText $SecondReceiptPath ($SecondReceipt | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Artifact $SeriesPath $Root 2 'unrelated member receipt' 'not bound to this member'
+    $SecondReceipt.intakeId = $SecondId
+    Write-HBText $SecondReceiptPath ($SecondReceipt | ConvertTo-Json -Depth 30)
+    $MinimalReceipt = [ordered]@{
+        schemaVersion = '2.0'; documentType = 'IntakeReceipt'; intakeId = $SecondId
+        status = 'ReadyForReview'
+        target = [ordered]@{ path = $SecondTargetRelative; normalizedSha256 = Get-HBHash $SecondTarget }
+        series = $SecondReceipt.series
+    }
+    Write-HBText $SecondReceiptPath ($MinimalReceipt | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Artifact $SeriesPath $Root 2 'fabricated member receipt' 'failed full validation'
+    Write-HBText $SecondReceiptPath ($SecondReceipt | ConvertTo-Json -Depth 30)
+    $Series.members[1].order = '2'
+    Write-HBText $SeriesPath ($Series | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Artifact $SeriesPath $Root 2 'string member order' 'order must be'
+    $Series.members[1].order = 2
     $Series.roots = @($SecondId)
     Write-HBText $SeriesPath ($Series | ConvertTo-Json -Depth 30)
     Invoke-HBPair Artifact $SeriesPath $Root 2 'invalid root'
