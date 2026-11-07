@@ -177,6 +177,66 @@ try {
     Invoke-HBPair Receipt $ReceiptPath $Root 2 'unknown generator version' 'generator.version'
     $Receipt.generator.version = $OriginalVersion
     Write-HBText $ReceiptPath ($Receipt | ConvertTo-Json -Depth 20)
+    $CreateReceipt = ($Receipt | ConvertTo-Json -Depth 30) | ConvertFrom-Json -AsHashtable
+    $PriorReceiptRelative = 'specs/intake-authoring-archive/prior-receipt.json'
+    $PriorReceiptPath = Join-Path $Root $PriorReceiptRelative
+    $CopiedReceiptRelative = 'specs/intake-authoring-archive/copied-receipt.json'
+    $CopiedReceiptPath = Join-Path $Root $CopiedReceiptRelative
+    $PriorTargetRelative = 'specs/intake-authoring-archive/prior-target.md'
+    Write-HBText $PriorReceiptPath ($CreateReceipt | ConvertTo-Json -Depth 30)
+    Copy-Item -LiteralPath $PriorReceiptPath -Destination $CopiedReceiptPath
+    Copy-Item -LiteralPath $Target -Destination (Join-Path $Root $PriorTargetRelative)
+    $Receipt.receiptId = [Guid]::NewGuid().ToString()
+    $Receipt.operation.type = 'Update'
+    $Receipt.provenanceMode = 'Supersession'
+    $Receipt.updateAuthorized = $true
+    $Receipt.updateAuthorityEvidence = 'Explicit fixture update authority'
+    $Receipt.supersedes.receiptPath = $PriorReceiptRelative
+    $Receipt.supersedes.targetNormalizedSha256 = $CreateReceipt.target.normalizedSha256
+    $Receipt.supersedes.archiveTargetPath = $PriorTargetRelative
+    $Receipt.supersedes.archiveReceiptPath = $CopiedReceiptRelative
+    Write-HBText $ReceiptPath ($Receipt | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Receipt $ReceiptPath $Root 0 'bound supersession predecessor'
+    $Receipt.supersedes.archiveReceiptPath = $PriorReceiptRelative
+    Write-HBText $ReceiptPath ($Receipt | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Receipt $ReceiptPath $Root 2 'archive receipt aliases predecessor' 'supersession predecessor is not bound'
+    $Receipt.supersedes.archiveReceiptPath = $CopiedReceiptRelative
+    $Receipt.supersedes.archiveTargetPath = $TargetRelative
+    Write-HBText $ReceiptPath ($Receipt | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Receipt $ReceiptPath $Root 2 'archive target aliases current target' 'supersession predecessor is not bound'
+    $Receipt.supersedes.archiveTargetPath = $PriorTargetRelative
+    Write-HBText $ReceiptPath ($Receipt | ConvertTo-Json -Depth 30)
+    $AlternateCasePrior = ($CreateReceipt | ConvertTo-Json -Depth 30) | ConvertFrom-Json -AsHashtable
+    $AlternateCasePrior.intakeId = ([string]$CreateReceipt.intakeId).ToUpperInvariant()
+    Write-HBText $PriorReceiptPath ($AlternateCasePrior | ConvertTo-Json -Depth 30)
+    Copy-Item -LiteralPath $PriorReceiptPath -Destination $CopiedReceiptPath -Force
+    Invoke-HBPair Receipt $ReceiptPath $Root 0 'bound predecessor with alternate UUID case'
+    $ForeignPrior = ($CreateReceipt | ConvertTo-Json -Depth 30) | ConvertFrom-Json -AsHashtable
+    $ForeignPrior.intakeId = [Guid]::NewGuid().ToString()
+    Write-HBText $PriorReceiptPath ($ForeignPrior | ConvertTo-Json -Depth 30)
+    Copy-Item -LiteralPath $PriorReceiptPath -Destination $CopiedReceiptPath -Force
+    Invoke-HBPair Receipt $ReceiptPath $Root 2 'unrelated supersession predecessor' 'supersession predecessor is not bound'
+    $InvalidPrior = ($CreateReceipt | ConvertTo-Json -Depth 30) | ConvertFrom-Json -AsHashtable
+    [void]$InvalidPrior.Remove('receiptId')
+    Write-HBText $PriorReceiptPath ($InvalidPrior | ConvertTo-Json -Depth 30)
+    Copy-Item -LiteralPath $PriorReceiptPath -Destination $CopiedReceiptPath -Force
+    Invoke-HBPair Receipt $ReceiptPath $Root 2 'predecessor without receipt ID' 'supersession predecessor is not bound'
+    [IO.File]::WriteAllBytes($PriorReceiptPath, [byte[]](0x7b, 0xff, 0x7d))
+    Copy-Item -LiteralPath $PriorReceiptPath -Destination $CopiedReceiptPath -Force
+    Invoke-HBPair Receipt $ReceiptPath $Root 2 'predecessor with invalid UTF-8' 'supersession predecessor is not bound'
+    $SelfPrior = ($CreateReceipt | ConvertTo-Json -Depth 30) | ConvertFrom-Json -AsHashtable
+    $SelfPrior.receiptId = ([string]$Receipt.receiptId).ToUpperInvariant()
+    Write-HBText $PriorReceiptPath ($SelfPrior | ConvertTo-Json -Depth 30)
+    Copy-Item -LiteralPath $PriorReceiptPath -Destination $CopiedReceiptPath -Force
+    Invoke-HBPair Receipt $ReceiptPath $Root 2 'self predecessor with alternate UUID case' 'supersession predecessor is not bound'
+    Write-HBText $PriorReceiptPath ($CreateReceipt | ConvertTo-Json -Depth 30)
+    Write-HBText $CopiedReceiptPath ("$([IO.File]::ReadAllText($PriorReceiptPath))`n")
+    Invoke-HBPair Receipt $ReceiptPath $Root 2 'archive receipt byte drift' 'supersession predecessor is not bound'
+    Copy-Item -LiteralPath $PriorReceiptPath -Destination $CopiedReceiptPath -Force
+    Write-HBText (Join-Path $Root $PriorTargetRelative) '# Drifted archived target'
+    Invoke-HBPair Receipt $ReceiptPath $Root 2 'archive target hash drift' 'supersession predecessor is not bound'
+    $Receipt = $CreateReceipt
+    Write-HBText $ReceiptPath ($Receipt | ConvertTo-Json -Depth 30)
     $ArchiveRelative = 'requirements/archive/url-source.001-completed.md'
     $ConfigPath = Join-Path $Root 'requirements/intake-governance-config.json'
     $ManifestPath = Join-Path $Root 'requirements/series.json'
@@ -272,7 +332,11 @@ try {
     $ReviewRelative = 'specs/intake-authoring-series/example/intake-review-request.json'
     Write-HBText (Join-Path $Root $ReviewRelative) '{}'
     $ProposalRelative = 'specs/intake-authoring-operations/proposal.json'
-    Write-HBText (Join-Path $Root $ProposalRelative) '{"approved":true}'
+    $Proposal = [ordered]@{ targets = @(
+        [ordered]@{ path = $TargetRelative; normalizedSha256 = Get-HBHash $Target; receiptPath = $ReceiptRelative },
+        [ordered]@{ path = $SecondTargetRelative; normalizedSha256 = Get-HBHash $SecondTarget; receiptPath = $SecondReceiptRelative }
+    ) }
+    Write-HBText (Join-Path $Root $ProposalRelative) ($Proposal | ConvertTo-Json -Depth 20)
     $SeriesId = [Guid]::NewGuid().ToString()
     $SeriesRelative = 'specs/intake-authoring-series/example/series.json'
     $Receipt.series = [ordered]@{
@@ -340,6 +404,67 @@ try {
     $OperationPath = Join-Path $Root 'specs/intake-authoring-operations/operation.json'
     Write-HBText $OperationPath ($Operation | ConvertTo-Json -Depth 30)
     Invoke-HBPair Artifact $OperationPath $Root 0 'completed transaction'
+    $Proposal.targets = @($Proposal.targets[0])
+    Write-HBText (Join-Path $Root $ProposalRelative) ($Proposal | ConvertTo-Json -Depth 20)
+    $Operation.proposalNormalizedSha256 = Get-HBHash (Join-Path $Root $ProposalRelative)
+    $Operation.type = 'Create'
+    $Operation.intendedTargets = @($TargetRelative)
+    $Operation.validatedTargets = @($TargetRelative)
+    $Operation.publishedTargets = @($TargetRelative)
+    Write-HBText $OperationPath ($Operation | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Artifact $OperationPath $Root 0 'single-target completed create'
+    $Proposal.targets = @()
+    Write-HBText (Join-Path $Root $ProposalRelative) ($Proposal | ConvertTo-Json -Depth 20)
+    $Operation.proposalNormalizedSha256 = Get-HBHash (Join-Path $Root $ProposalRelative)
+    $Operation.type = 'Delete'
+    $Operation.intendedTargets = @()
+    $Operation.validatedTargets = @()
+    $Operation.publishedTargets = @()
+    Write-HBText $OperationPath ($Operation | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Artifact $OperationPath $Root 0 'empty-target completed delete'
+    $Proposal.targets = @(
+        [ordered]@{ path = $TargetRelative; normalizedSha256 = Get-HBHash $Target; receiptPath = $ReceiptRelative },
+        [ordered]@{ path = $SecondTargetRelative; normalizedSha256 = Get-HBHash $SecondTarget; receiptPath = $SecondReceiptRelative }
+    )
+    Write-HBText (Join-Path $Root $ProposalRelative) ($Proposal | ConvertTo-Json -Depth 20)
+    $Operation.proposalNormalizedSha256 = Get-HBHash (Join-Path $Root $ProposalRelative)
+    $Operation.type = 'CreateSeries'
+    $Operation.intendedTargets = @($TargetRelative, $SecondTargetRelative)
+    $Operation.validatedTargets = @($TargetRelative, $SecondTargetRelative)
+    $Operation.publishedTargets = @($TargetRelative, $SecondTargetRelative)
+    $Operation.intendedTargets = @("$TargetRelative|intakes", 'second.md')
+    $Operation.validatedTargets = @("$TargetRelative|intakes", 'second.md')
+    $Operation.publishedTargets = @("$TargetRelative|intakes", 'second.md')
+    Write-HBText $OperationPath ($Operation | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Artifact $OperationPath $Root 2 'forged target list with delimiter' 'approved proposal'
+    $Proposal.targets[0].Remove('normalizedSha256')
+    Write-HBText (Join-Path $Root $ProposalRelative) ($Proposal | ConvertTo-Json -Depth 20)
+    $Operation.proposalNormalizedSha256 = Get-HBHash (Join-Path $Root $ProposalRelative)
+    $Operation.intendedTargets = @($TargetRelative, $SecondTargetRelative)
+    $Operation.validatedTargets = @($TargetRelative, $SecondTargetRelative)
+    $Operation.publishedTargets = @($TargetRelative, $SecondTargetRelative)
+    Write-HBText $OperationPath ($Operation | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Artifact $OperationPath $Root 2 'proposal target without hash' 'normalizedSha256'
+    $Proposal.targets[0]['normalizedSha256'] = Get-HBHash $Target
+    Write-HBText (Join-Path $Root $ProposalRelative) ($Proposal | ConvertTo-Json -Depth 20)
+    $Operation.proposalNormalizedSha256 = Get-HBHash (Join-Path $Root $ProposalRelative)
+    $Operation.intendedTargets = @('intakes/unpublished.md')
+    $Operation.validatedTargets = @('intakes/unpublished.md')
+    $Operation.publishedTargets = @('intakes/unpublished.md')
+    Write-HBText $OperationPath ($Operation | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Artifact $OperationPath $Root 2 'unpublished target reported completed' 'approved proposal'
+    $Operation.intendedTargets = @($TargetRelative, $SecondTargetRelative)
+    $Operation.validatedTargets = @($TargetRelative, $SecondTargetRelative)
+    $Operation.publishedTargets = @($TargetRelative, $SecondTargetRelative)
+    Remove-Item -LiteralPath $SecondTarget
+    Write-HBText $OperationPath ($Operation | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Artifact $OperationPath $Root 2 'approved target absent after publication' 'is missing'
+    Write-HBText $SecondTarget (New-HBIntake $SecondTargetRelative)
+    $SecondReceipt.operation.operationId = [Guid]::NewGuid().ToString()
+    Write-HBText $SecondReceiptPath ($SecondReceipt | ConvertTo-Json -Depth 30)
+    Invoke-HBPair Artifact $OperationPath $Root 2 'unrelated published receipt' 'not bound'
+    $SecondReceipt.operation.operationId = $OperationId
+    Write-HBText $SecondReceiptPath ($SecondReceipt | ConvertTo-Json -Depth 30)
     $Operation.publishedTargets = @($TargetRelative)
     Write-HBText $OperationPath ($Operation | ConvertTo-Json -Depth 30)
     Invoke-HBPair Artifact $OperationPath $Root 2 'partial publication rejection'

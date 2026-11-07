@@ -326,6 +326,57 @@ elif document_type == "IntakeOperation":
             errors.append("Completed operation requires explicit approval")
         if intended != validated or intended != published:
             errors.append("Completed operation requires intended, validated, and published targets to match")
+        if operation_type in ("Create", "Update", "CreateSeries", "UpdateSeries") and not published:
+            errors.append("Completed create/update operation requires published targets")
+        # The proposal is the approved target contract, not the operation's self-reported arrays.
+        try:
+            resolved_proposal = (repo / proposal_path).resolve(strict=True)
+            if not resolved_proposal.is_relative_to(repo) or not resolved_proposal.is_file():
+                raise ValueError("proposal resolves outside repository")
+            proposal = json.loads(resolved_proposal.read_text(encoding="utf-8-sig"))
+            rows = proposal.get("targets") if isinstance(proposal, dict) else None
+            if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+                raise ValueError("proposal.targets must be an array of target records")
+            proposed_paths = [row.get("path") for row in rows]
+            if not all(isinstance(path, str) for path in proposed_paths):
+                raise ValueError("proposal.targets paths must be strings")
+            if proposed_paths != published or len(set(proposed_paths)) != len(proposed_paths):
+                raise ValueError("published targets do not match approved proposal")
+            for index, row in enumerate(rows):
+                label = f"proposal.targets[{index}]"
+                target_path = row.get("path")
+                target_hash = row.get("normalizedSha256")
+                receipt_path = row.get("receiptPath")
+                if not all(isinstance(value, str) and relative(value)
+                           for value in (target_path, receipt_path)):
+                    raise ValueError(f"{label} paths must be repository-relative")
+                if not isinstance(target_hash, str) or not re.fullmatch(r"[0-9a-f]{64}", target_hash):
+                    raise ValueError(f"{label}.normalizedSha256 must be a lowercase SHA-256")
+                check_relative_file(target_path, f"{label}.path", target_hash)
+                receipt_file = (repo / receipt_path).resolve(strict=True)
+                if not receipt_file.is_relative_to(repo) or not receipt_file.is_file():
+                    raise ValueError(f"{label}.receiptPath resolves outside repository")
+                receipt = json.loads(receipt_file.read_text(encoding="utf-8-sig"))
+                if not isinstance(receipt, dict):
+                    raise ValueError(f"{label}.receiptPath must contain an object")
+                receipt_validation = subprocess.run(
+                    ["bash", str(script_dir / "validate-intake-authoring-receipt.sh"),
+                     "--receipt", str(receipt_file), "--repo", str(repo)],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+                )
+                if receipt_validation.returncode != 0:
+                    raise ValueError(f"{label}.receiptPath failed full validation")
+                receipt_target = receipt.get("target", {}) if isinstance(receipt, dict) else {}
+                receipt_operation = receipt.get("operation", {}) if isinstance(receipt, dict) else {}
+                if (receipt.get("documentType") != "IntakeReceipt" or
+                        not isinstance(receipt_target, dict) or
+                        receipt_target.get("path") != target_path or
+                        receipt_target.get("normalizedSha256") != target_hash or
+                        not isinstance(receipt_operation, dict) or
+                        uuid.UUID(receipt_operation.get("operationId")) != uuid.UUID(data.get("operationId"))):
+                    raise ValueError(f"{label}.receiptPath is not bound to this operation and target")
+        except (OSError, RuntimeError, UnicodeDecodeError, ValueError, TypeError, AttributeError) as exc:
+            errors.append(f"Completed operation lacks approved published evidence: {exc}")
     text(data, "rollbackBoundary", "operation")
     failure = data.get("failure")
     if not isinstance(failure, dict):

@@ -557,6 +557,41 @@ else:
                         errors.append(f"{label} must be repository-relative")
                     elif not (repo / value).is_file():
                         errors.append(f"archived supersession evidence missing: {value}")
+                if all(relative(value) and (repo / value).is_file()
+                       for value in (old_receipt, archive_target, archive_receipt)):
+                    try:
+                        prior_path = (repo / old_receipt).resolve(strict=True)
+                        archived_target = (repo / archive_target).resolve(strict=True)
+                        archived_receipt = (repo / archive_receipt).resolve(strict=True)
+                        if any(not path.is_relative_to(repo)
+                               for path in (prior_path, archived_target, archived_receipt)):
+                            raise ValueError("supersession evidence resolves outside repository")
+                        current_target = repo / target_path_text
+                        if (archived_receipt.samefile(prior_path) or
+                                (current_target.is_file() and archived_target.samefile(current_target))):
+                            raise ValueError("supersession archive must be separate from active evidence")
+                        prior = json.loads(prior_path.read_text(encoding="utf-8-sig"))
+                        prior_target = prior.get("target", {})
+                        prior_id = prior.get("receiptId")
+                        if not isinstance(prior_id, str) or uuid.UUID(prior_id).int == 0:
+                            raise ValueError("archived predecessor has no valid receiptId")
+                        prior_operation = prior.get("operation", {})
+                        if (prior.get("schemaVersion") not in ("1.0", "1.1", "2.0")
+                                or uuid.UUID(prior_id) == uuid.UUID(receipt_id)
+                                or prior.get("status") not in ("ReadyForReview", "NeedsClarification")
+                                or not isinstance(prior_target, dict)
+                                or prior_target.get("path") != target_path_text
+                                or prior_target.get("normalizedSha256") != old_target_hash
+                                or (prior.get("schemaVersion") == "2.0" and
+                                    (prior.get("documentType") != "IntakeReceipt" or
+                                     uuid.UUID(prior.get("intakeId")) != uuid.UUID(data.get("intakeId")) or
+                                     not isinstance(prior_operation, dict) or
+                                     prior_operation.get("type") not in ("Create", "Update")))
+                                or prior_path.read_bytes() != archived_receipt.read_bytes()
+                                or digest(archived_target) != old_target_hash):
+                            raise ValueError("archived predecessor does not match intake identity and target hash")
+                    except (OSError, UnicodeDecodeError, ValueError, TypeError, AttributeError) as exc:
+                        errors.append(f"supersession predecessor is not bound: {exc}")
         series = data.get("series")
         if not isinstance(series, dict):
             errors.append("series must be an object")

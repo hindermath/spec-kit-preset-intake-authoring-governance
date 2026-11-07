@@ -380,6 +380,21 @@ and validated before any active member is published. Failure cannot leave a
 partially active series. The next action is Intake Review mode `Series`; review
 does not start automatically.
 
+Completed Create/Update operations, including series operations, bind each
+published target to the approved proposal. The proposal JSON contains a
+`targets` array in publication order. Each entry names `path`,
+`normalizedSha256`, and `receiptPath`. The operation validator checks the exact
+target set, published file contents, and receipt identity against its
+`operationId`; an empty or merely claimed publication cannot complete.
+
+Abgeschlossene Create-/Update-Operationen einschließlich Serien binden jedes
+veröffentlichte Ziel an den freigegebenen Vorschlag. Dessen JSON enthält
+`targets` in Veröffentlichungsreihenfolge; jeder Eintrag nennt `path`,
+`normalizedSha256` und `receiptPath`. Der Validator prüft die genaue Zielmenge,
+Dateiinhalte und den vollständigen Receipt samt `operationId`.
+Bei Delete-/DeleteSeries-Operationen ohne neu veröffentlichte Ziele ist
+`targets` eine leere Liste.
+
 ## Language And Accessibility / Sprache und Barrierefreiheit
 
 Repository guidance controls the language. Without a project rule, the

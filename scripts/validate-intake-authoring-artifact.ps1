@@ -42,6 +42,16 @@ function Get-HBText([object]$Object, [string]$Name, [string]$Label) {
 function Test-HBRelative([string]$Value) {
     return -not [IO.Path]::IsPathRooted($Value) -and -not ($Value -split '[\\/]' | Where-Object { $_ -eq '..' })
 }
+function Test-HBExactPathArray([object[]]$First, [object[]]$Second) {
+    if ($First.Count -ne $Second.Count) { return $false }
+    for ($index = 0; $index -lt $First.Count; $index++) {
+        if ($First[$index] -isnot [string] -or $Second[$index] -isnot [string] -or
+            -not [string]::Equals($First[$index], $Second[$index], [StringComparison]::Ordinal)) {
+            return $false
+        }
+    }
+    return $true
+}
 function Get-HBHash([string]$Path) {
     $Bytes = [IO.File]::ReadAllBytes($Path)
     $Offset = if ($Bytes.Length -ge 3 -and $Bytes[0] -eq 0xEF -and $Bytes[1] -eq 0xBB -and $Bytes[2] -eq 0xBF) { 3 } else { 0 }
@@ -108,6 +118,22 @@ function Test-HBFile([string]$Value, [string]$Label, [string]$Hash = '', [switch
         try { $Actual = Get-HBHash $Path } catch { $Errors.Add("${Label} is not strict UTF-8 text: $($_.Exception.Message)"); return }
         if ($Actual -ne $Hash) { $Errors.Add("${Label} hash drift") }
     }
+}
+function Read-HBContainedJson([string]$Value) {
+    if (-not (Test-HBRelative $Value)) { throw 'path must be repository-relative' }
+    $physicalRoot = Resolve-HBPhysicalPath $RepoRoot
+    $physicalPath = Resolve-HBPhysicalPath (Join-Path $RepoRoot $Value)
+    $comparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
+    $prefix = $physicalRoot.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+    if (-not $physicalPath.StartsWith($prefix, $comparison) -or -not [IO.File]::Exists($physicalPath)) {
+        throw 'path resolves outside repository or is missing'
+    }
+    $bytes = [IO.File]::ReadAllBytes($physicalPath)
+    $offset = if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) { 3 } else { 0 }
+    $utf8 = [Text.UTF8Encoding]::new($false, $true)
+    $content = $utf8.GetString($bytes, $offset, $bytes.Length - $offset)
+    if ($content.Contains([char]0)) { throw 'binary NUL detected' }
+    return $content | ConvertFrom-Json
 }
 
 try {
@@ -261,7 +287,8 @@ switch ($DocumentType) {
         if ($Status -notin @('Proposed', 'Approved', 'Applying', 'Completed', 'Failed')) { $Errors.Add('operation.status is invalid') }
         Test-HBTime (Get-HBText $Data 'createdAt' 'operation') 'createdAt'
         [void](Get-HBText $Data 'authorityEvidence' 'operation')
-        Test-HBFile (Get-HBText $Data 'proposalPath' 'operation') 'proposalPath' (Get-HBText $Data 'proposalNormalizedSha256' 'operation')
+        $ProposalPath = Get-HBText $Data 'proposalPath' 'operation'
+        Test-HBFile $ProposalPath 'proposalPath' (Get-HBText $Data 'proposalNormalizedSha256' 'operation')
         $Approval = Get-HBProperty $Data 'approval'; $Approved = Get-HBProperty $Approval 'approved'
         if ($Approved -isnot [bool]) { $Errors.Add('approval.approved must be boolean') }
         $Intended = @(Get-HBProperty $Data 'intendedTargets'); $Validated = @(Get-HBProperty $Data 'validatedTargets'); $Published = @(Get-HBProperty $Data 'publishedTargets')
@@ -273,8 +300,60 @@ switch ($DocumentType) {
         }
         if ($Status -eq 'Completed') {
             if ($Approved -ne $true) { $Errors.Add('Completed operation requires explicit approval') }
-            if (($Intended -join '|') -ne ($Validated -join '|') -or ($Intended -join '|') -ne ($Published -join '|')) {
+            if (-not (Test-HBExactPathArray $Intended $Validated) -or
+                -not (Test-HBExactPathArray $Intended $Published)) {
                 $Errors.Add('Completed operation requires intended, validated, and published targets to match')
+            }
+            if ((Get-HBProperty $Data 'type') -in @('Create', 'Update', 'CreateSeries', 'UpdateSeries') -and -not $Published.Count) {
+                $Errors.Add('Completed create/update operation requires published targets')
+            }
+            try {
+                $proposal = Read-HBContainedJson $ProposalPath
+                $targetsProperty = $proposal.PSObject.Properties['targets']
+                $rawRows = $null
+                if ($null -ne $targetsProperty) { $rawRows = $targetsProperty.Value }
+                if ($rawRows -isnot [array]) { throw 'proposal.targets must be an array of target records' }
+                $rows = @($rawRows)
+                $proposedPaths = @($rows | ForEach-Object { Get-HBProperty $_ 'path' })
+                $uniqueProposed = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+                $proposedUnique = $true
+                foreach ($path in $proposedPaths) {
+                    if ($path -isnot [string] -or -not $uniqueProposed.Add($path)) { $proposedUnique = $false }
+                }
+                if (-not (Test-HBExactPathArray $proposedPaths $Published) -or -not $proposedUnique) {
+                    throw 'published targets do not match approved proposal'
+                }
+                for ($index = 0; $index -lt $rows.Count; $index++) {
+                    $row = $rows[$index]
+                    $label = "proposal.targets[$index]"
+                    $targetPath = Get-HBProperty $row 'path'
+                    $targetHash = Get-HBProperty $row 'normalizedSha256'
+                    $receiptPath = Get-HBProperty $row 'receiptPath'
+                    if ($targetPath -isnot [string] -or $receiptPath -isnot [string] -or
+                        -not (Test-HBRelative $targetPath) -or -not (Test-HBRelative $receiptPath)) {
+                        throw "${label} paths must be repository-relative"
+                    }
+                    if ($targetHash -isnot [string] -or $targetHash -cnotmatch '^[0-9a-f]{64}$') {
+                        throw "${label}.normalizedSha256 must be a lowercase SHA-256"
+                    }
+                    Test-HBFile $targetPath "${label}.path" ([string]$targetHash)
+                    $receipt = Read-HBContainedJson $receiptPath
+                    $physicalReceipt = Resolve-HBPhysicalPath (Join-Path $RepoRoot $receiptPath)
+                    $validationOutput = & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'validate-intake-authoring-receipt.ps1') `
+                        -Receipt $physicalReceipt -Repo $RepoRoot 2>&1
+                    if ($LASTEXITCODE -ne 0) { throw "${label}.receiptPath failed full validation" }
+                    $receiptTarget = Get-HBProperty $receipt 'target'
+                    $receiptOperation = Get-HBProperty $receipt 'operation'
+                    if ((Get-HBProperty $receipt 'documentType') -cne 'IntakeReceipt' -or
+                        (Get-HBProperty $receiptTarget 'path') -cne $targetPath -or
+                        (Get-HBProperty $receiptTarget 'normalizedSha256') -cne $targetHash -or
+                        [Guid]::Parse([string](Get-HBProperty $receiptOperation 'operationId')) -ne
+                            [Guid]::Parse([string](Get-HBProperty $Data 'operationId'))) {
+                        throw "${label}.receiptPath is not bound to this operation and target"
+                    }
+                }
+            } catch {
+                $Errors.Add("Completed operation lacks approved published evidence: $($_.Exception.Message)")
             }
         }
         [void](Get-HBText $Data 'rollbackBoundary' 'operation')
