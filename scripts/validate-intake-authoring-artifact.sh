@@ -18,7 +18,11 @@ while [ "$#" -gt 0 ]; do
 done
 [ -n "$artifact" ] || { printf 'ERROR: --artifact is required\n' >&2; exit 2; }
 
-python3 - "$artifact" "$repo" "$(cd "$(dirname "$0")" && pwd)" <<'PY'
+bash_executable="$(command -v bash)"
+if command -v cygpath >/dev/null 2>&1; then
+  bash_executable="$(cygpath -w "$bash_executable")"
+fi
+python3 - "$artifact" "$repo" "$(cd "$(dirname "$0")" && pwd)" "$bash_executable" <<'PY'
 import hashlib
 import json
 import re
@@ -182,7 +186,7 @@ if document_type == "IntakeSeries":
                 if not receipt_file.is_relative_to(repo):
                     raise ValueError("member receipt resolves outside repository")
                 receipt_validation = subprocess.run(
-                    ["bash", str(script_dir / "validate-intake-authoring-receipt.sh"),
+                    [sys.argv[4], str(script_dir / "validate-intake-authoring-receipt.sh"),
                      "--receipt", str(receipt_file), "--repo", str(repo)],
                     capture_output=True, text=True, check=False,
                 )
