@@ -365,7 +365,7 @@ elif document_type == "IntakeOperation":
                 if not isinstance(receipt, dict):
                     raise ValueError(f"{label}.receiptPath must contain an object")
                 receipt_validation = subprocess.run(
-                    ["bash", str(script_dir / "validate-intake-authoring-receipt.sh"),
+                    [sys.argv[4], str(script_dir / "validate-intake-authoring-receipt.sh"),
                      "--receipt", str(receipt_file), "--repo", str(repo)],
                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
                 )
