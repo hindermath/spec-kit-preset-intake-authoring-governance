@@ -1,10 +1,10 @@
 # Intake Authoring Governance Preset
 
-<!-- current-package: 0.3.10 -->
+<!-- current-package: 0.3.11 -->
 
-Paketkennung: **v0.3.10**. [Vorbereitung und Veröffentlichungsgrenze](docs/release-0.3.10-validation.md). Die Release-Seite und der externe Archivnachweis belegen die Veröffentlichung, nicht dieser Vorbereitungsstand. Frühere Versionsnachweise unten bleiben historisch.
+Paketkennung: **v0.3.11**. [Vorbereitung und Veröffentlichungsgrenze](docs/release-0.3.11-validation.md). Die Release-Seite und der externe Archivnachweis belegen die Veröffentlichung, nicht dieser Vorbereitungsstand. Frühere Versionsnachweise unten bleiben historisch.
 
-<span lang="en">Package identity: v0.3.10. The release page and external archive evidence prove publication, not this preparation snapshot. Earlier version records below remain historical.</span>
+<span lang="en">Package identity: v0.3.11. The release page and external archive evidence prove publication, not this preparation snapshot. Earlier version records below remain historical.</span>
 
 [Release-Abschluss und Verbesserungsprofil / Publication closeout and improvement profile](docs/release-0.3.9-validation.md).
 
@@ -26,15 +26,15 @@ Kompositionsdokumentation. Verhalten und Berechtigungsgrenzen bleiben erhalten.
 *Patch 0.3.9 packages the improved bilingual getting-started and composition
 guide. Behavior and authority boundaries remain unchanged.*
 
-Paketversion / Package version: **0.3.10**. Der Installationsbefehl steht
+Paketversion / Package version: **0.3.11**. Der Installationsbefehl steht
 auf einer Zeile und bindet das genaue Release-ZIP, damit die automatische
 Community-Prüfung ihn direkt auswerten kann. Die Generatorvorlage bindet
-0.3.10; bekannte Schema-2-Receipts einschließlich 0.3.6, 0.3.7, 0.3.8 und 0.3.9 bleiben
+0.3.11; bekannte Schema-2-Receipts einschließlich 0.3.6, 0.3.7, 0.3.8 und 0.3.9 bleiben
 gültig und unverändert. Dieser Patch gleicht die DE-/EN-Anleitung aneinander an.
 Keine neue Command-, Schema-, Prioritäts- oder Ausführungsberechtigung.
 
 The installation command is a single line bound to the exact release ZIP for
-automatic community validation. The generator template binds 0.3.10 and keeps
+automatic community validation. The generator template binds 0.3.11 and keeps
 known schema-2 receipts, including 0.3.6, 0.3.7, 0.3.8 and 0.3.9, valid without rewriting
 them. This patch aligns the German/English instructions. No new command,
 schema, priority or execution authority is introduced.
@@ -176,7 +176,7 @@ and freshness without writing.*
 ## Install
 
 ```bash
-specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.10.zip --priority 64
+specify preset add --from https://github.com/hindermath/spec-kit-preset-intake-authoring-governance/archive/refs/tags/v0.3.11.zip --priority 64
 specify preset list
 specify preset info intake-authoring-governance
 specify preset resolve intake-authoring-policy-template
