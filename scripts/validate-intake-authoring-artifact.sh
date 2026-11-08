@@ -184,10 +184,11 @@ if document_type == "IntakeSeries":
                 receipt_validation = subprocess.run(
                     ["bash", str(script_dir / "validate-intake-authoring-receipt.sh"),
                      "--receipt", str(receipt_file), "--repo", str(repo)],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+                    capture_output=True, text=True, check=False,
                 )
                 if receipt_validation.returncode != 0:
-                    raise ValueError("member receipt failed full validation")
+                    detail = (receipt_validation.stderr or receipt_validation.stdout).strip()
+                    raise ValueError("member receipt failed full validation: " + detail[:500])
                 member_receipt = json.loads(normalized(receipt_file).decode("utf-8"))
                 member_target = member_receipt.get("target", {})
                 member_series = member_receipt.get("series", {})
